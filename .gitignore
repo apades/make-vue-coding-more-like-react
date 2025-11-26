@@ -1,0 +1,17 @@
+node_modules
+dist
+.nuxt
+.DS_Store
+*.local
+.idea/
+*.log
+out
+.eslintcache
+tsconfig.tsbuildinfo
+*.vsix
+*.virtual.ts
+auto-imports.d.ts
+.temp
+node-compile-cache/
+
+output
