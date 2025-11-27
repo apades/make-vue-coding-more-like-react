@@ -1,0 +1,46 @@
+{
+  "name": "@mvcmlr/babel-plugin-jsx",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.11.0",
+  "dependencies": {
+    "@babel/helper-module-imports": "catalog:babel",
+    "@babel/helper-plugin-utils": "catalog:babel",
+    "@babel/plugin-syntax-jsx": "catalog:babel",
+    "@babel/template": "catalog:babel",
+    "@babel/traverse": "catalog:babel",
+    "@babel/types": "catalog:babel",
+    "@vue/babel-helper-vue-transform-on": "workspace:*",
+    "@vue/babel-plugin-resolve-type": "workspace:*",
+    "@vue/shared": "catalog:vue"
+  },
+  "devDependencies": {
+    "@babel/core": "catalog:babel",
+    "@babel/preset-env": "catalog:babel",
+    "@types/babel__template": "^7.4.4",
+    "@types/babel__traverse": "^7.28.0",
+    "@vue/test-utils": "^2.4.6",
+    "regenerator-runtime": "^0.14.1",
+    "vue": "catalog:vue"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "dev": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./package.json": "./package.json"
+    }
+  }
+}

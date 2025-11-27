@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "composite": true,
+    "target": "ESNext",
+    "lib": ["ES2023"],
+    "customConditions": ["vine"],
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "skipLibCheck": true
+  },
+  "include": ["packages", "types", "tsdown.config.ts", "template"],
+  "exclude": [
+    "**/dist",
+    "packages/nuxt-module",
+    "packages/e2e-vite",
+    "packages/create-vue-vine/template",
+    "packages/**/*.tsx",
+    "packages/**/*.vue"
+  ]
+}

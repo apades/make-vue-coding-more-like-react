@@ -1,24 +1,7 @@
 {
-  "compilerOptions": {
-    "composite": true,
-    "target": "ESNext",
-    "lib": ["ES2023"],
-    "customConditions": ["vine"],
-    "module": "Preserve",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "noEmit": true,
-    "skipLibCheck": true
-  },
-  "include": ["packages", "types", "tsdown.config.ts"],
-  "exclude": [
-    "**/dist",
-    "packages/nuxt-module",
-    "packages/e2e-vite",
-    "packages/create-vue-vine/template"
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
   ]
 }

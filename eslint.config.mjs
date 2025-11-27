@@ -53,6 +53,7 @@ export default tsEslint.config(
       '@typescript-eslint/no-unused-expressions': 0,
       '@typescript-eslint/no-require-imports': 0,
       '@typescript-eslint/no-this-alias': 0,
+      '@typescript-eslint/ban-ts-comment': 0,
       'import/named': 0,
       'import/order': [
         'error',

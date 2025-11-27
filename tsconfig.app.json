@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "lib": ["DOM", "ESNext", "DOM.Iterable"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    "incremental": true,
+
+    /* Linting */
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "noImplicitAny": true
+  },
+  "include": ["**/*.tsx", "**/*.vue"],
+  "exclude": [
+    "**/dist",
+    "packages/nuxt-module",
+    "packages/e2e-vite",
+    "packages/create-vue-vine/template"
+  ]
+}

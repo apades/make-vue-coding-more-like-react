@@ -9,17 +9,18 @@
   "license": "MIT",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@babel/parser": "^7.28.5",
-    "@babel/types": "^7.28.5",
+    "@babel/parser": "catalog:babel",
+    "@babel/types": "catalog:babel",
     "@vue/compiler-dom": "^3.5.25",
-    "@vue/shared": "^3.5.25",
+    "@vue/shared": "catalog:vue",
     "estree-walker": "^3.0.3",
     "get-tsconfig": "^4.13.0",
     "hash-sum": "^2.0.0",
     "line-column": "^1.0.2",
     "lru-cache": "^11.2.2",
     "magic-string": "^0.30.21",
-    "ts-morph": "^27.0.2"
+    "ts-morph": "^27.0.2",
+    "@mvcmlr/babel-plugin-jsx": "workspace:*"
   },
   "devDependencies": {
     "@types/hash-sum": "^1.0.2",

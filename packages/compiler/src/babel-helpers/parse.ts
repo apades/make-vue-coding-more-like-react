@@ -4,7 +4,7 @@ import { parse } from '@babel/parser'
 export function babelParse(code: string, options: ParserOptions = {}) {
   const finalOptions: ParserOptions = {
     sourceType: 'module',
-    plugins: ['typescript'],
+    plugins: ['jsx', 'typescript'],
     errorRecovery: true,
     ...options,
   }

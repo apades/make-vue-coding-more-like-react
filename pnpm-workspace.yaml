@@ -1,2 +1,17 @@
 packages:
   - packages/*
+
+catalogs:
+  babel:
+    '@babel/parser': '^7.28.5'
+    '@babel/types': '^7.28.5'
+    '@babel/helper-module-imports': '^7.27.1'
+    '@babel/helper-plugin-utils': '^7.27.1'
+    '@babel/plugin-syntax-jsx': '^7.27.1'
+    '@babel/template': '^7.27.2'
+    '@babel/traverse': '^7.28.4'
+    '@babel/core': '^7.28.4'
+    '@babel/preset-env': '^7.28.3'
+  vue:
+    vue: '^3.5.25'
+    '@vue/shared': '^3.5.22'
