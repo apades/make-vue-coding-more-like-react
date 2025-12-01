@@ -22,7 +22,7 @@
     "sourceMap": true,
     "noImplicitAny": true
   },
-  "include": ["**/*.tsx", "**/*.vue"],
+  "include": ["**/*.tsx", "**/*.vue", "packages/playground"],
   "exclude": [
     "**/dist",
     "packages/nuxt-module",

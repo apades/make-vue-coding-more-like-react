@@ -363,3 +363,8 @@ export type VineAnalyzeRunner = (
   analyzeCtx: VineAnalyzeCtx,
   fnItselfNode: BabelFunctionNodeTypes,
 ) => void
+
+export type JsxCompAnalyzeRunner = (
+  analyzeCtx: VineAnalyzeCtx,
+  rootNode: Node,
+) => void

@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "pnpm run \"/^dev:.*/\"",
-    "dev:babel-jsx": "tsdown --watch --sourcemap"
+    "dev:babel-jsx": "tsdown --watch --sourcemap",
+    "dev:babel-jsx-plugin": "pnpm --filter @mvcmlr/plugin-vue-jsx run dev --sourcemap"
   },
   "license": "MIT",
   "packageManager": "pnpm@10.11.0",
@@ -20,7 +21,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.5.0",
     "prettier": "^3.6.2",
-    "tsdown": "^0.16.6",
+    "tsdown": "catalog:tsdown",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.0",

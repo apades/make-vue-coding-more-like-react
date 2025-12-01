@@ -33,6 +33,14 @@ catalogs:
     '@babel/types':
       specifier: ^7.28.5
       version: 7.28.5
+  tsdown:
+    tsdown:
+      specifier: ^0.16.6
+      version: 0.16.6
+  vite:
+    vite:
+      specifier: ^7.2.4
+      version: 7.2.4
   vue:
     '@vue/shared':
       specifier: ^3.5.22
@@ -76,7 +84,7 @@ importers:
         specifier: ^3.6.2
         version: 3.6.2
       tsdown:
-        specifier: ^0.16.6
+        specifier: catalog:tsdown
         version: 0.16.6(synckit@0.11.11)(typescript@5.9.3)
       tsx:
         specifier: ^4.20.6
@@ -125,6 +133,12 @@ importers:
       '@vue/shared':
         specifier: catalog:vue
         version: 3.5.25
+      get-tsconfig:
+        specifier: ^4.13.0
+        version: 4.13.0
+      ts-morph:
+        specifier: ^27.0.2
+        version: 27.0.2
     devDependencies:
       '@babel/core':
         specifier: catalog:babel
@@ -223,16 +237,50 @@ importers:
         version: 1.0.2
 
   packages/playground:
-    dependencies:
+    devDependencies:
       '@babel/core':
         specifier: catalog:babel
         version: 7.28.5
       '@babel/plugin-transform-typescript':
         specifier: ^7.28.5
         version: 7.28.5(@babel/core@7.28.5)
+      '@mvcmlr/plugin-vue-jsx':
+        specifier: workspace:*
+        version: link:../plugin-vue-jsx
+      vite:
+        specifier: ^7.2.4
+        version: 7.2.4(@types/node@24.10.1)(tsx@4.20.6)
+      vue:
+        specifier: catalog:vue
+        version: 3.5.25(typescript@5.9.3)
+
+  packages/plugin-vue-jsx:
+    dependencies:
+      '@babel/core':
+        specifier: catalog:babel
+        version: 7.28.5
+      '@babel/plugin-syntax-typescript':
+        specifier: ^7.27.1
+        version: 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-transform-typescript':
+        specifier: ^7.28.5
+        version: 7.28.5(@babel/core@7.28.5)
       '@mvcmlr/babel-plugin-jsx':
         specifier: workspace:*
         version: link:../babel-plugin-jsx
+      '@rolldown/pluginutils':
+        specifier: ^1.0.0-beta.50
+        version: 1.0.0-beta.51
+      vue:
+        specifier: ^3.0.0
+        version: 3.5.25(typescript@5.9.3)
+    devDependencies:
+      tsdown:
+        specifier: catalog:tsdown
+        version: 0.16.6(synckit@0.11.11)(typescript@5.9.3)
+      vite:
+        specifier: catalog:vite
+        version: 7.2.4(@types/node@24.10.1)(tsx@4.20.6)
 
 packages:
 

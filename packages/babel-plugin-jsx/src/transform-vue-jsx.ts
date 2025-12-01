@@ -22,6 +22,9 @@ import SlotFlags from './slotFlags'
 import { PatchFlags } from './patchFlags'
 import parseDirectives from './parseDirectives'
 import type { Slots, State } from './interface'
+// import { getJsxFnProps } from './ast'
+import { analyzeJsxParams } from './analyze'
+import { buildJsxComponentToVueDefineComponent } from './transform-vue-define-component'
 
 const xlinkRE = /^xlink([A-Z])/
 
@@ -576,7 +579,40 @@ const transformJSXElement = (
   ])
 }
 
+const isReturnJsxElementAndGetReturnStatement = (
+  parentPath: NodePath<t.FunctionDeclaration>,
+) => {
+  let isJsxFn = false
+  let returnStatement: NodePath<t.ReturnStatement> | undefined
+  parentPath.traverse({
+    ReturnStatement(returnPath) {
+      // skip ts error
+      returnPath.traverse({
+        JSXElement(jsxPath) {
+          isJsxFn = true
+          returnStatement = returnPath
+          jsxPath.stop()
+          returnPath.stop()
+        },
+      })
+    },
+  })
+
+  return isJsxFn ? returnStatement : undefined
+}
 const visitor: Visitor<State> = {
+  FunctionDeclaration: {
+    enter(path, state) {
+      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
+      if (!returnStatement) return
+      const filename = state.file.opts.sourceFileName
+      const params = analyzeJsxParams(path, state)
+      buildJsxComponentToVueDefineComponent(path, state, {
+        params,
+        returnStatement,
+      })
+    },
+  },
   JSXElement: {
     exit(path, state) {
       path.replaceWith(transformJSXElement(path, state))

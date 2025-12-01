@@ -194,20 +194,18 @@ export function getAllVinePropMacroCall(
   return allVinePropMacroCalls
 }
 
-export function getFunctionParams(
-  fnItselfNode: BabelFunctionNodeTypes,
-): BabelFunctionParams {
-  const params: BabelFunctionParams = []
-  if (isFunctionDeclaration(fnItselfNode)) {
-    params.push(...fnItselfNode.params)
-  } else if (
+export function getFunctionParams(fnItselfNode: BabelFunctionNodeTypes) {
+  if (isFunctionDeclaration(fnItselfNode)) return fnItselfNode.params
+  if (
     isFunctionExpression(fnItselfNode) ||
     isArrowFunctionExpression(fnItselfNode)
-  ) {
-    params.push(...fnItselfNode.params)
-  }
-  return params
+  )
+    return fnItselfNode.params
+
+  return []
 }
+
+export function getJsxCompFnArguments(rootNode: Node) {}
 
 export function findVineTagTemplateStringReturn(node: Node): {
   templateReturn: ReturnStatement | undefined

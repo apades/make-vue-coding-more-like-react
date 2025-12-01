@@ -84,3 +84,15 @@ export function wrapWithAsyncContext(
     __restore()
   );`
 }
+
+type Data = {
+  payment: {
+    val: 1111
+  }
+}
+
+type ColData = {
+  label: 'payment'
+  name: '收款金额'
+  parent: ''
+}

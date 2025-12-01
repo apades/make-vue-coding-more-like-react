@@ -16,7 +16,9 @@
     "@babel/types": "catalog:babel",
     "@vue/babel-helper-vue-transform-on": "workspace:*",
     "@vue/babel-plugin-resolve-type": "workspace:*",
-    "@vue/shared": "catalog:vue"
+    "@vue/shared": "catalog:vue",
+    "get-tsconfig": "^4.13.0",
+    "ts-morph": "^27.0.2"
   },
   "devDependencies": {
     "@babel/core": "catalog:babel",

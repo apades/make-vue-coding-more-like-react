@@ -20,6 +20,7 @@
     "packages/nuxt-module",
     "packages/e2e-vite",
     "packages/create-vue-vine/template",
+    "packages/playground",
     "packages/**/*.tsx",
     "packages/**/*.vue"
   ]

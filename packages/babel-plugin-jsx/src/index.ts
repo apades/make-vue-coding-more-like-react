@@ -11,6 +11,7 @@ import { declare } from '@babel/helper-plugin-utils'
 import transformVueJSX from './transform-vue-jsx'
 import sugarFragment from './sugar-fragment'
 import type { State, VueJSXPluginOptions } from './interface'
+import { createTsMorph } from './ts-morph'
 
 export { VueJSXPluginOptions }
 
@@ -55,6 +56,11 @@ const plugin: (
     if (typeof opt.resolveType === 'boolean') opt.resolveType = {}
     resolveType = ResolveType(api, opt.resolveType, dirname)
   }
+
+  createTsMorph({
+    fileId: dirname,
+  })
+  // console.log('dirname', dirname, api)
   return {
     ...(resolveType || {}),
     name: 'babel-plugin-jsx',
@@ -66,7 +72,7 @@ const plugin: (
       Program: {
         enter(path, state) {
           if (hasJSX(path)) {
-            const importNames = [
+            const vueImportNames = [
               'createVNode',
               'Fragment',
               'resolveComponent',
@@ -81,6 +87,7 @@ const plugin: (
               'resolveDirective',
               'mergeProps',
               'createTextVNode',
+              'defineComponent',
               'isVNode',
             ]
             if (isModule(path)) {
@@ -89,7 +96,7 @@ const plugin: (
                 string,
                 t.MemberExpression | t.Identifier
               > = {}
-              importNames.forEach((name) => {
+              vueImportNames.forEach((name) => {
                 state.set(name, () => {
                   if (importMap[name]) {
                     return types.cloneNode(importMap[name])
@@ -129,7 +136,7 @@ const plugin: (
             } else {
               // var _vue = require('vue');
               let sourceName: t.Identifier
-              importNames.forEach((name) => {
+              vueImportNames.forEach((name) => {
                 state.set(name, () => {
                   if (!sourceName) {
                     sourceName = addNamespace(path, 'vue', {

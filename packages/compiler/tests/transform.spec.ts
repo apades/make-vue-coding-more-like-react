@@ -1,6 +1,6 @@
 import { format } from 'prettier'
 import { describe, expect, it } from 'vitest'
-import { compileVineTypeScriptFile } from '../src/index'
+import { compileJsxFile, compileVineTypeScriptFile } from '../src/index'
 import type { VineCompilerOptions } from '../src/types'
 import { createMockTransformCtx } from './test-utils'
 
@@ -17,6 +17,20 @@ function AnotherComp(props: {
     <p>foo:{{ foo }}</p>
     <p>bar:{{ bar }}</p>
   \`
+}`
+const testJsxContent = `
+function AnotherComp(props: {
+  foo: string;
+  bar: number;
+  a?: number
+  d: () => void
+}) {
+
+  return <>
+    <div>AnotherComp</div>
+    <p>foo:{{ foo }}</p>
+    <p>bar:{{ bar }}</p>
+  </>
 }`
 const testContent3 = `
 import { ref } from 'vue'
@@ -220,6 +234,18 @@ describe('test transform', () => {
   it('inline mode output result', async () => {
     const { mockCompilerCtx, mockCompilerHooks } = createMockTransformCtx()
     compileVineTypeScriptFile(testContent, 'testTransformInlineResult', {
+      compilerHooks: mockCompilerHooks,
+    })
+    expect(mockCompilerCtx.vineCompileErrors.length).toBe(0)
+    const fileCtx = mockCompilerCtx.fileCtxMap.get('testTransformInlineResult')
+    const transformed = fileCtx?.fileMagicCode.toString() ?? ''
+    const formated = await format(transformed, { parser: 'babel-ts' })
+    expect(formated).toMatchSnapshot()
+  })
+
+  it('jsx inline mode output result', async () => {
+    const { mockCompilerCtx, mockCompilerHooks } = createMockTransformCtx()
+    compileJsxFile(testJsxContent, 'testTransformInlineResult', {
       compilerHooks: mockCompilerHooks,
     })
     expect(mockCompilerCtx.vineCompileErrors.length).toBe(0)

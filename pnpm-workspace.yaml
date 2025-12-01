@@ -15,3 +15,7 @@ catalogs:
   vue:
     vue: '^3.5.25'
     '@vue/shared': '^3.5.22'
+  tsdown:
+    tsdown: '^0.16.6'
+  vite:
+    vite: '^7.2.4'

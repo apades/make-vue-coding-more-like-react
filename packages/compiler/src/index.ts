@@ -1,10 +1,15 @@
 import type { Node } from '@babel/types'
+import {} from '@vue/compiler-dom'
 import MagicString from 'magic-string'
+import { analyzeVine } from './analyze'
+import { analyzeJsx } from './analyze-jsx'
 import {
   findAllExportNamedDeclarations,
   findVineCompFnDecls,
 } from './babel-helpers/ast'
+import { findAllJsxFnDeclarations } from './babel-helpers/ast-jsx'
 import { babelParse } from './babel-helpers/parse'
+import { transformFile } from './transform'
 import type {
   VineCompileCtx,
   VineCompilerCtx,
@@ -13,9 +18,6 @@ import type {
   VineFileCtx,
 } from './types'
 import { createLinkedCodeTag } from './utils'
-import { analyzeVine } from './analyze'
-import {} from '@vue/compiler-dom'
-import { transformFile } from './transform'
 
 export function createVineFileCtx(
   code: string,
@@ -100,6 +102,42 @@ export function compileVineTypeScriptFile(
   return vineFileCtx
 }
 
+export function compileJsxFile(
+  code: string,
+  fileId: string,
+  vineCompileCtx: VineCompileCtx,
+  ssr = false,
+): VineFileCtx {
+  const { compilerHooks } = vineCompileCtx
+  const compilerOptions = compilerHooks.getCompilerCtx().options
+  const vineFileCtx: VineFileCtx = createVineFileCtx(
+    code,
+    fileId,
+    vineCompileCtx,
+  )
+  compilerHooks.onBindFileCtx?.(fileId, vineFileCtx)
+
+  const jsxCompFnDecls = findAllJsxFnDeclarations(vineFileCtx.root)
+
+  // 1. Validate all vine restrictions
+  //   doValidateVine(compilerHooks, vineFileCtx, vineCompFnDecls)
+
+  // 2. Analysis
+  doAnalyzeVine(compilerHooks, vineFileCtx, jsxCompFnDecls)
+
+  // 3. Codegen, or call it "transform"
+  transformFile(
+    vineFileCtx,
+    compilerHooks,
+    compilerOptions?.inlineTemplate ?? true,
+    ssr,
+  )
+
+  compilerHooks.onEnd?.()
+
+  return vineFileCtx
+}
+
 export function doValidateVine(
   vineCompilerHooks: VineCompilerHooks,
   vineFileCtx: VineFileCtx,
@@ -132,4 +170,13 @@ export function createCompilerCtx(
       ...options,
     },
   }
+}
+
+export function doAnalyzeJsx(
+  vineCompilerHooks: VineCompilerHooks,
+  vineFileCtx: VineFileCtx,
+  vineCompFnDecls: Node[],
+): void {
+  analyzeJsx(vineCompilerHooks, vineFileCtx, vineCompFnDecls)
+  vineCompilerHooks.onAnalysisEnd?.()
 }

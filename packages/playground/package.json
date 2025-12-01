@@ -3,14 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "dev": "vite"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
-  "dependencies": {
+  "devDependencies": {
+    "@babel/core": "catalog:babel",
     "@babel/plugin-transform-typescript": "^7.28.5",
-    "@mvcmlr/babel-plugin-jsx": "workspace:*",
-    "@babel/core": "catalog:babel"
+    "@mvcmlr/plugin-vue-jsx": "workspace:*",
+    "vite": "^7.2.4",
+    "vue": "catalog:vue"
   }
 }
