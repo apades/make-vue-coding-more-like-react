@@ -24,7 +24,7 @@ import { PatchFlags } from './patchFlags'
 import parseDirectives from './parseDirectives'
 import type { Slots, State } from './interface'
 // import { getJsxFnProps } from './ast'
-import { analyzeJsxParams as analyzeJsxFnParams } from './analyze'
+import { analyzeJsxFnComp } from './analyze'
 import { buildJsxFnComponentToVueDefineComponent } from './transform-vue-define-component'
 
 const xlinkRE = /^xlink([A-Z])/
@@ -463,7 +463,7 @@ const transformJSXElement = (
     /*
       <A>{a}</A> or <A>{() => a}</A>
      */
-    const { enableObjectSlots = true } = state.opts
+    const enableObjectSlots = true
     const child = children[0]
     const objectExpression = t.objectExpression(
       [
@@ -608,11 +608,11 @@ const visitor: Visitor<State> = {
       if (!returnStatement) return
       const filename = state.file.opts.sourceFileName
       const fnName = path.node.id?.name || ''
-      const params = analyzeJsxFnParams(path, state, fnName)
+      const analysisData = analyzeJsxFnComp(path, state, fnName)
       buildJsxFnComponentToVueDefineComponent(path, state, {
-        params,
         returnStatement,
         fnName,
+        ...analysisData,
       })
     },
   },
@@ -628,11 +628,11 @@ const visitor: Visitor<State> = {
       if (!returnStatement) return
       const filename = state.file.opts.sourceFileName
       const fnName = (path.parent.id as t.Identifier).name || ''
-      const params = analyzeJsxFnParams(path, state, fnName)
+      const analysisData = analyzeJsxFnComp(path, state, fnName)
       buildJsxFnComponentToVueDefineComponent(path, state, {
-        params,
         returnStatement,
         fnName,
+        ...analysisData,
       })
     },
   },

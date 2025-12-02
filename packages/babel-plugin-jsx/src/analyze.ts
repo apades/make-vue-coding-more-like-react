@@ -5,7 +5,7 @@ import type { State } from './interface'
 import { getTsMorph, resolveJsxCompFnProps } from './ts-morph'
 import type { TsMorphCache } from './types'
 
-export function analyzeJsxParams(
+export function analyzeJsxFnComp(
   path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
   state: State,
   fnName: string,
@@ -23,9 +23,16 @@ export function analyzeJsxParams(
     t.Identifier,
   ]
 
-  const rs = [propsRecord, slotRecord] as const
+  const rs = {
+    params: [propsRecord, slotRecord],
+    propsName: 'props' as string,
+  } as const
 
   if (!fnProps) return rs
+  // TODO objectPattern type
+  if (t.isObjectPattern(fnProps))
+    throw Error('No support `{ a, b } : props` objectPattern type yet')
+  ;(rs as any).propsName = fnProps.name
   //   path.node.params[0]
 
   const propsTypeAnnotation = fnProps.typeAnnotation
@@ -45,7 +52,7 @@ export function analyzeJsxParams(
   // or that type literal contains generic type parameters
   if (!isTypeLiteralProps || isContainsGenericTypeParams) {
     tsMorphCache = getTsMorph()
-    // TODO
+    // TODO [across files] reference type
     const tsMorphAnalyzedPropsInfo = resolveJsxCompFnProps({
       tsMorphCache: getTsMorph(),
       fnName,

@@ -1,6 +1,6 @@
 import type { NodePath } from '@babel/traverse'
 import t from '@babel/types'
-import type { analyzeJsxParams } from './analyze'
+import type { analyzeJsxFnComp } from './analyze'
 import type { State } from './interface'
 import { createIdentifier, VUE_DFC } from './utils'
 
@@ -8,10 +8,9 @@ export function buildJsxFnComponentToVueDefineComponent(
   path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
   state: State,
   params: {
-    params: ReturnType<typeof analyzeJsxParams>
     returnStatement: NodePath<t.ReturnStatement>
     fnName: string
-  },
+  } & ReturnType<typeof analyzeJsxFnComp>,
 ) {
   const isArrowFn = t.isArrowFunctionExpression(path.node)
   const bodyStatements = t.isArrowFunctionExpression(path.node)
@@ -28,6 +27,18 @@ export function buildJsxFnComponentToVueDefineComponent(
   const returnStatement = params.returnStatement.node
 
   const JSX_COMP_NAME = '__JSX'
+  const JSX_COMP_SLOT_NAME = '__SLOT'
+  const JSX_COMP_PROPS_NAME = '__PROPS'
+  const JSX_COMP_CTX_NAME = '__CTX'
+
+  const slotsStatement = t.variableDeclaration('const', [
+    t.variableDeclarator(
+      t.identifier(JSX_COMP_SLOT_NAME),
+      t.arrayExpression(
+        Object.keys(jsxSlot).map((key) => t.stringLiteral(key)),
+      ),
+    ),
+  ])
 
   const innerJsxArrowFn = t.arrowFunctionExpression(
     [],
@@ -39,6 +50,59 @@ export function buildJsxFnComponentToVueDefineComponent(
       value: VUE_DFC,
     },
   ]
+
+  /* 
+   const props = new Proxy({},{get:(_,key)=>{
+      if(__slots.includes(key)) return ctx.slots[key]
+      return __props[key]
+    }})
+  */
+  const propsProxyStatement = t.variableDeclaration('const', [
+    t.variableDeclarator(
+      t.identifier(params.propsName),
+      t.newExpression(t.identifier('Proxy'), [
+        t.objectExpression([]),
+        t.objectExpression([
+          t.objectProperty(
+            t.identifier('get'),
+            t.arrowFunctionExpression(
+              [t.identifier('_'), t.identifier('key')],
+              t.blockStatement([
+                t.ifStatement(
+                  t.callExpression(
+                    t.memberExpression(
+                      t.identifier(JSX_COMP_SLOT_NAME),
+                      t.identifier('includes'),
+                    ),
+                    [t.identifier('key')],
+                  ),
+                  t.returnStatement(
+                    t.memberExpression(
+                      t.memberExpression(
+                        t.identifier(JSX_COMP_CTX_NAME),
+                        t.identifier('slots'),
+                      ),
+                      t.identifier('key'),
+                      true,
+                    ),
+                  ),
+                ),
+
+                t.returnStatement(
+                  t.memberExpression(
+                    t.identifier(JSX_COMP_PROPS_NAME),
+                    t.identifier('key'),
+                    true,
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ]),
+      ]),
+    ),
+  ])
+
   const innerJsxCompFnWrapper = t.variableDeclaration('const', [
     t.variableDeclarator(
       t.identifier(JSX_COMP_NAME),
@@ -52,25 +116,29 @@ export function buildJsxFnComponentToVueDefineComponent(
               Object.keys(jsxProps).map((key) => t.stringLiteral(key)),
             ),
           ),
+          t.objectProperty(
+            t.identifier('slots'),
+            t.identifier(JSX_COMP_SLOT_NAME),
+          ),
           t.objectMethod(
             'method',
             t.identifier('setup'),
             [
-              // TODO get props name
-              t.identifier('props'),
-              t.identifier('ctx'),
+              t.identifier(JSX_COMP_PROPS_NAME),
+              t.identifier(JSX_COMP_CTX_NAME),
             ],
             t.blockStatement([
               t.expressionStatement(
                 t.callExpression(
                   t.memberExpression(
-                    t.identifier('ctx'),
+                    t.identifier(JSX_COMP_CTX_NAME),
                     t.identifier('expose'),
                   ),
                   // TODO get component expose
                   [],
                 ),
               ),
+              propsProxyStatement,
               ...bodyWithoutReturn,
               t.returnStatement(innerJsxArrowFn),
             ]),
@@ -88,6 +156,7 @@ export function buildJsxFnComponentToVueDefineComponent(
   const factoryArrowFn = t.arrowFunctionExpression(
     [],
     t.blockStatement([
+      slotsStatement,
       innerJsxCompFnWrapper,
       t.returnStatement(t.identifier(JSX_COMP_NAME)),
     ]),

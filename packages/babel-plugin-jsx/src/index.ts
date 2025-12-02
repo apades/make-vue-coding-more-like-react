@@ -108,7 +108,7 @@ const plugin: (
                   return identifier
                 })
               })
-              const { enableObjectSlots = true } = state.opts
+              const enableObjectSlots = true
               if (enableObjectSlots) {
                 state.set('@vue/babel-plugin-jsx/runtimeIsSlot', () => {
                   if (importMap.runtimeIsSlot) {
@@ -149,7 +149,7 @@ const plugin: (
 
               const helpers: Record<string, t.Identifier> = {}
 
-              const { enableObjectSlots = true } = state.opts
+              const enableObjectSlots = true
               if (enableObjectSlots) {
                 state.set('@vue/babel-plugin-jsx/runtimeIsSlot', () => {
                   if (helpers.runtimeIsSlot) {

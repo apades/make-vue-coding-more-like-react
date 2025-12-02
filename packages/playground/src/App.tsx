@@ -8,7 +8,7 @@ type ComProps = {
 }
 
 const ChildComp = (
-  props: {
+  unuProps: {
     foo: string
     bar: number
     a?: number
@@ -16,18 +16,18 @@ const ChildComp = (
   },
   // ref: any,
 ) => {
-  let com = props.a + props.foo
+  let com = unuProps.a + unuProps.foo
   const val = ref(0)
 
-  if (props.a) {
+  if (unuProps.a) {
     return null
   }
 
   return (
     <div>
       <div>AnotherComp</div>
-      <p>foo:{props.foo}</p>
-      <p>bar:{props.bar}</p>
+      <p>foo:{unuProps.foo}</p>
+      <p>bar:{unuProps.bar}</p>
       <p
         onClick={() => {
           val.value++
