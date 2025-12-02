@@ -11,6 +11,7 @@ import {
   isConstant,
   isDirective,
   isOn,
+  isVueDfc,
   transformJSXExpressionContainer,
   transformJSXSpreadAttribute,
   transformJSXSpreadChild,
@@ -23,8 +24,8 @@ import { PatchFlags } from './patchFlags'
 import parseDirectives from './parseDirectives'
 import type { Slots, State } from './interface'
 // import { getJsxFnProps } from './ast'
-import { analyzeJsxParams } from './analyze'
-import { buildJsxComponentToVueDefineComponent } from './transform-vue-define-component'
+import { analyzeJsxParams as analyzeJsxFnParams } from './analyze'
+import { buildJsxFnComponentToVueDefineComponent } from './transform-vue-define-component'
 
 const xlinkRE = /^xlink([A-Z])/
 
@@ -580,7 +581,7 @@ const transformJSXElement = (
 }
 
 const isReturnJsxElementAndGetReturnStatement = (
-  parentPath: NodePath<t.FunctionDeclaration>,
+  parentPath: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
 ) => {
   let isJsxFn = false
   let returnStatement: NodePath<t.ReturnStatement> | undefined
@@ -606,10 +607,32 @@ const visitor: Visitor<State> = {
       const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
       if (!returnStatement) return
       const filename = state.file.opts.sourceFileName
-      const params = analyzeJsxParams(path, state)
-      buildJsxComponentToVueDefineComponent(path, state, {
+      const fnName = path.node.id?.name || ''
+      const params = analyzeJsxFnParams(path, state, fnName)
+      buildJsxFnComponentToVueDefineComponent(path, state, {
         params,
         returnStatement,
+        fnName,
+      })
+    },
+  },
+  ArrowFunctionExpression: {
+    enter(path, state) {
+      // √ () => {}
+      // × /* VUE DFC */() => {}
+      if (isVueDfc(path.node)) return
+      // √ const A = () => <div></div>
+      // × () => <div></div>
+      if (!t.isVariableDeclarator(path.parent)) return
+      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
+      if (!returnStatement) return
+      const filename = state.file.opts.sourceFileName
+      const fnName = (path.parent.id as t.Identifier).name || ''
+      const params = analyzeJsxFnParams(path, state, fnName)
+      buildJsxFnComponentToVueDefineComponent(path, state, {
+        params,
+        returnStatement,
+        fnName,
       })
     },
   },

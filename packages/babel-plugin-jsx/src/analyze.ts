@@ -6,9 +6,11 @@ import { getTsMorph, resolveJsxCompFnProps } from './ts-morph'
 import type { TsMorphCache } from './types'
 
 export function analyzeJsxParams(
-  path: NodePath<t.FunctionDeclaration>,
+  path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
   state: State,
+  fnName: string,
 ) {
+  const isArrowFn = t.isArrowFunctionExpression(path.node)
   const propsRecord: Record<string, t.TSPropertySignature> = {}
   const slotRecord: Record<
     string,
@@ -46,7 +48,7 @@ export function analyzeJsxParams(
     // TODO
     const tsMorphAnalyzedPropsInfo = resolveJsxCompFnProps({
       tsMorphCache: getTsMorph(),
-      fnName: path.node.id?.name || '',
+      fnName,
       state,
     })
     return rs

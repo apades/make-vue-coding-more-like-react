@@ -7,7 +7,7 @@ type ComProps = {
   d: () => void
 }
 
-function ChildComp(
+const ChildComp = (
   props: {
     foo: string
     bar: number
@@ -15,7 +15,7 @@ function ChildComp(
     d: () => void
   },
   // ref: any,
-) {
+) => {
   let com = props.a + props.foo
   const val = ref(0)
 

@@ -353,3 +353,8 @@ export const transformJSXSpreadAttribute = (
     args.push(...(properties as t.ObjectProperty[]))
   }
 }
+
+export const VUE_DFC = 'VUE DFC'
+export function isVueDfc(node: t.Node) {
+  return node.leadingComments?.some((comment) => comment.value === VUE_DFC)
+}
