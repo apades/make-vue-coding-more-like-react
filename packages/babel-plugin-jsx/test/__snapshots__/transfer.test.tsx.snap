@@ -1,0 +1,52 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`jsx fn component define > arrowFunction 1`] = `
+"import { defineComponent as _defineComponent, createTextVNode as _createTextVNode, createVNode as _createVNode } from "vue";
+const App = (/*VUE DFC*/() => {
+  const __JSX = _defineComponent({
+    name: "App",
+    props: [],
+    setup(props, ctx) {
+      ctx.expose();
+      return /*VUE DFC*/() => {
+        return _createVNode("div", null, [_createTextVNode("hello")]);
+      };
+    }
+  });
+  return __JSX;
+})();"
+`;
+
+exports[`jsx fn component define > function 1`] = `
+"import { defineComponent as _defineComponent, createTextVNode as _createTextVNode, createVNode as _createVNode } from "vue";
+const App = (/*VUE DFC*/() => {
+  const __JSX = _defineComponent({
+    name: "App",
+    props: [],
+    setup(props, ctx) {
+      ctx.expose();
+      return /*VUE DFC*/() => {
+        return _createVNode("div", null, [_createTextVNode("hello")]);
+      };
+    }
+  });
+  return __JSX;
+})();"
+`;
+
+exports[`jsx props define > TypeLiteral Props 1`] = `
+"import { defineComponent as _defineComponent, createTextVNode as _createTextVNode, createVNode as _createVNode } from "vue";
+const App = (/*VUE DFC*/() => {
+  const __JSX = _defineComponent({
+    name: "App",
+    props: ["a"],
+    setup(props, ctx) {
+      ctx.expose();
+      return /*VUE DFC*/() => {
+        return _createVNode("div", null, [_createTextVNode("hello")]);
+      };
+    }
+  });
+  return __JSX;
+})();"
+`;

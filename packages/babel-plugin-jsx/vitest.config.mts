@@ -1,11 +1,29 @@
 import { defineConfig } from 'vitest/config'
+import { babel } from '@rollup/plugin-babel'
+import Jsx from './src'
 
 const vitestConfig: ReturnType<typeof defineConfig> = defineConfig({
+  resolve: {
+    conditions: ['dev'],
+  },
+  esbuild: {
+    jsx: 'preserve',
+  },
+  plugins: [
+    babel({
+      babelHelpers: 'bundled',
+      extensions: ['.tsx', '.jsx'],
+      plugins: [
+        [
+          Jsx,
+          { optimize: true, isCustomElement: (tag: string) => /^x-/.test(tag) },
+        ],
+      ],
+    }),
+  ],
   test: {
-    testTimeout: 10000,
-    coverage: {
-      provider: 'v8',
-    },
+    globals: true,
+    environment: 'jsdom',
   },
 })
 export default vitestConfig
