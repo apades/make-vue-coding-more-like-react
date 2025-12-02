@@ -40,13 +40,24 @@ const ChildComp = (
 }
 
 function App() {
+  const count = ref(1)
   return (
     <div>
       <p>this is APP</p>
       <ChildComp bar={1} foo="hello" d={() => {}} />
       <hr />
 
-      <CompB a="asd" />
+      <CompB
+        a="asd"
+        footer={(inner) => (
+          <div onClick={() => count.value++}>
+            text: <p style={{ color: 'red' }}>{inner}</p>
+            <p>props count : {count.value}</p>
+          </div>
+        )}
+      >
+        <p style={{ color: 'green' }}>default slot count {count.value}</p>
+      </CompB>
     </div>
   )
 }

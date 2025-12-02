@@ -35,7 +35,8 @@ export function buildJsxFnComponentToVueDefineComponent(
     t.variableDeclarator(
       t.identifier(JSX_COMP_SLOT_NAME),
       t.arrayExpression(
-        Object.keys(jsxSlot).map((key) => t.stringLiteral(key)),
+        // Object.keys(jsxSlot).map((key) => t.stringLiteral(key)),
+        [t.stringLiteral('children')],
       ),
     ),
   ])
@@ -77,13 +78,15 @@ export function buildJsxFnComponentToVueDefineComponent(
                     [t.identifier('key')],
                   ),
                   t.returnStatement(
-                    t.memberExpression(
+                    t.callExpression(
                       t.memberExpression(
-                        t.identifier(JSX_COMP_CTX_NAME),
-                        t.identifier('slots'),
+                        t.memberExpression(
+                          t.identifier(JSX_COMP_CTX_NAME),
+                          t.identifier('slots'),
+                        ),
+                        t.identifier('default'),
                       ),
-                      t.identifier('key'),
-                      true,
+                      [],
                     ),
                   ),
                 ),
@@ -116,10 +119,10 @@ export function buildJsxFnComponentToVueDefineComponent(
               Object.keys(jsxProps).map((key) => t.stringLiteral(key)),
             ),
           ),
-          t.objectProperty(
-            t.identifier('slots'),
-            t.identifier(JSX_COMP_SLOT_NAME),
-          ),
+          // t.objectProperty(
+          //   t.identifier('slots'),
+          //   t.identifier(JSX_COMP_SLOT_NAME),
+          // ),
           t.objectMethod(
             'method',
             t.identifier('setup'),
