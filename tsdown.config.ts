@@ -8,7 +8,7 @@ export default defineConfig({
   entry: ['src/index.ts'],
   dts: { oxc: true },
   target: 'node20.19',
-  platform: 'neutral',
+  platform: 'node',
   inlineOnly: [],
   exports: {
     devExports: 'dev',

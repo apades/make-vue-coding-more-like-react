@@ -1,4 +1,4 @@
-import { dirname, extname, isAbsolute, resolve } from 'path'
+import { dirname, extname, isAbsolute, resolve } from 'node:path'
 import { getTsconfig } from 'get-tsconfig'
 import { Project, Node as TmNode } from 'ts-morph'
 import type {
