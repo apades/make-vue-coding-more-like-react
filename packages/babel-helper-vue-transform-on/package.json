@@ -1,5 +1,5 @@
 {
-  "name": "@vue/babel-helper-vue-transform-on",
+  "name": "@mvcmlr/babel-helper-vue-transform-on",
   "version": "2.0.1",
   "type": "module",
   "description": "to help transform on",

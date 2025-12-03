@@ -1,5 +1,5 @@
 {
-  "name": "@vue/babel-plugin-resolve-type",
+  "name": "@mvcmlr/babel-plugin-resolve-type",
   "version": "2.0.1",
   "description": "Babel plugin for resolving Vue types.",
   "author": "Kevin Deng <sxzz@sxzz.moe>",

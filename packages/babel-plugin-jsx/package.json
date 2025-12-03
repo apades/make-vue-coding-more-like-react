@@ -14,14 +14,15 @@
     "@babel/template": "catalog:babel",
     "@babel/traverse": "catalog:babel",
     "@babel/types": "catalog:babel",
-    "@vue/babel-helper-vue-transform-on": "workspace:*",
-    "@vue/babel-plugin-resolve-type": "workspace:*",
+    "@mvcmlr/babel-helper-vue-transform-on": "workspace:*",
+    "@mvcmlr/babel-plugin-resolve-type": "workspace:*",
     "@vue/shared": "catalog:vue",
     "get-tsconfig": "^4.13.0",
     "ts-morph": "^27.0.2"
   },
   "devDependencies": {
     "@babel/core": "catalog:babel",
+    "@babel/plugin-syntax-typescript": "^7.27.1",
     "@babel/plugin-transform-typescript": "^7.28.5",
     "@babel/preset-env": "catalog:babel",
     "@rollup/plugin-babel": "^6.1.0",

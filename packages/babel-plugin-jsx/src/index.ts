@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import nodePath from 'node:path'
 import t from '@babel/types'
 import type * as BabelCore from '@babel/core'
 import _template from '@babel/template'
@@ -6,10 +8,12 @@ import _template from '@babel/template'
 import _syntaxJsx from '@babel/plugin-syntax-jsx'
 import { addNamed, addNamespace, isModule } from '@babel/helper-module-imports'
 import { type NodePath, type Visitor } from '@babel/traverse'
-import ResolveType from '@vue/babel-plugin-resolve-type'
+import ResolveType from '@mvcmlr/babel-plugin-resolve-type'
 import { declare } from '@babel/helper-plugin-utils'
+import { type Options } from '@mvcmlr/babel-plugin-resolve-type'
 import transformVueJSX from './transform-vue-jsx'
 import sugarFragment from './sugar-fragment'
+import transformVueDefineComponent from './transform-vue-define-component.ts'
 import type { State, VueJSXPluginOptions } from './interface'
 import { createTsMorph } from './ts-morph'
 
@@ -53,13 +57,31 @@ const plugin: (
   const { types } = api
   let resolveType: BabelCore.PluginObj<BabelCore.PluginPass> | undefined
   if (opt.resolveType) {
-    if (typeof opt.resolveType === 'boolean') opt.resolveType = {}
+    if (typeof opt.resolveType === 'boolean')
+      opt.resolveType = {
+        fs: {
+          readFile: (p) =>
+            fs.readFileSync(nodePath.resolve(dirname, p), 'utf-8'),
+          fileExists: (p) => fs.existsSync(nodePath.resolve(dirname, p)),
+          realpath: (p) =>
+            fs.realpathSync(nodePath.resolve(dirname, p), 'utf-8'),
+        },
+      }
     resolveType = ResolveType(api, opt.resolveType, dirname)
   }
 
-  createTsMorph({
-    fileId: dirname,
-  })
+  const updateResolveTypeFs = (nowFileDirname: string) => {
+    ;(opt.resolveType as Options)!.fs!.readFile = (p) =>
+      fs.readFileSync(nodePath.resolve(nowFileDirname, p), 'utf-8')
+    ;(opt.resolveType as Options)!.fs!.fileExists = (p) =>
+      fs.existsSync(nodePath.resolve(nowFileDirname, p))
+    ;(opt.resolveType as Options)!.fs!.realpath = (p) =>
+      fs.realpathSync(nodePath.resolve(nowFileDirname, p), 'utf-8')
+  }
+
+  // createTsMorph({
+  //   fileId: dirname,
+  // })
   // console.log('dirname', dirname, api)
   return {
     ...(resolveType || {}),
@@ -68,9 +90,13 @@ const plugin: (
     visitor: {
       ...(resolveType?.visitor as Visitor<State>),
       ...transformVueJSX,
+      // ...transformVueDefineComponent,
       ...sugarFragment,
       Program: {
         enter(path, state) {
+          const filename = state.file.opts.sourceFileName!
+          updateResolveTypeFs(nodePath.dirname(filename))
+
           if (hasJSX(path)) {
             const vueImportNames = [
               'createVNode',

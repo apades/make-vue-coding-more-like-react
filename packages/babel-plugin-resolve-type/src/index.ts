@@ -30,7 +30,7 @@ export const plugin: (
           filename: filename,
           source: file.code,
           options,
-          ast: file.ast.program.body,
+          ast: [...file.ast.program.body],
           isCE: false,
           error(msg, node) {
             throw new Error(
@@ -64,6 +64,7 @@ export const plugin: (
       },
       visitor: {
         CallExpression(path) {
+          path.findParent((p) => t.isProgram(p.node))
           if (!ctx) {
             throw new Error(
               '[@vue/babel-plugin-resolve-type] context is not loaded.',
@@ -88,13 +89,13 @@ export const plugin: (
           let emitsGenerics: BabelCore.types.TSType | undefined
           if (node.typeParameters && node.typeParameters.params.length > 0) {
             propsGenerics = node.typeParameters.params[0]
-            emitsGenerics = node.typeParameters.params[1]
+            // emitsGenerics = node.typeParameters.params[1]
           }
 
           node.arguments[1] =
             processProps(comp, propsGenerics, options) || options
-          node.arguments[1] =
-            processEmits(comp, emitsGenerics, node.arguments[1]) || options
+          // node.arguments[1] =
+          //   processEmits(comp, emitsGenerics, node.arguments[1]) || options
         },
         VariableDeclarator(path) {
           inferComponentName(path)
@@ -211,17 +212,12 @@ export const plugin: (
     function resolveTypeReference(typeNode: BabelCore.types.TSType) {
       if (!ctx) return
 
-      if (t.isTSTypeReference(typeNode)) {
-        const typeName = getTypeReferenceName(typeNode)
-        if (typeName) {
-          const typeDeclaration = findTypeDeclaration(typeName)
-          if (typeDeclaration) {
-            return typeDeclaration
-          }
-        }
-      }
+      if (!t.isTSTypeReference(typeNode)) return
+      const typeName = getTypeReferenceName(typeNode)
+      if (!typeName) return
+      const typeDeclaration = findTypeDeclaration(typeName)
 
-      return
+      return typeDeclaration
     }
 
     function getTypeReferenceName(typeRef: BabelCore.types.TSTypeReference) {

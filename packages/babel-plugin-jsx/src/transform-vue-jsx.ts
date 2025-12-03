@@ -11,7 +11,6 @@ import {
   isConstant,
   isDirective,
   isOn,
-  isVueDfc,
   transformJSXExpressionContainer,
   transformJSXSpreadAttribute,
   transformJSXSpreadChild,
@@ -23,9 +22,6 @@ import SlotFlags from './slotFlags'
 import { PatchFlags } from './patchFlags'
 import parseDirectives from './parseDirectives'
 import type { Slots, State } from './interface'
-// import { getJsxFnProps } from './ast'
-import { analyzeJsxFnComp } from './analyze'
-import { buildJsxFnComponentToVueDefineComponent } from './transform-vue-define-component'
 
 const xlinkRE = /^xlink([A-Z])/
 
@@ -580,62 +576,7 @@ const transformJSXElement = (
   ])
 }
 
-const isReturnJsxElementAndGetReturnStatement = (
-  parentPath: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
-) => {
-  let isJsxFn = false
-  let returnStatement: NodePath<t.ReturnStatement> | undefined
-  parentPath.traverse({
-    ReturnStatement(returnPath) {
-      // skip ts error
-      returnPath.traverse({
-        JSXElement(jsxPath) {
-          isJsxFn = true
-          returnStatement = returnPath
-          jsxPath.stop()
-          returnPath.stop()
-        },
-      })
-    },
-  })
-
-  return isJsxFn ? returnStatement : undefined
-}
 const visitor: Visitor<State> = {
-  FunctionDeclaration: {
-    enter(path, state) {
-      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
-      if (!returnStatement) return
-      const filename = state.file.opts.sourceFileName
-      const fnName = path.node.id?.name || ''
-      const analysisData = analyzeJsxFnComp(path, state, fnName)
-      buildJsxFnComponentToVueDefineComponent(path, state, {
-        returnStatement,
-        fnName,
-        ...analysisData,
-      })
-    },
-  },
-  ArrowFunctionExpression: {
-    enter(path, state) {
-      // √ () => {}
-      // × /* VUE DFC */() => {}
-      if (isVueDfc(path.node)) return
-      // √ const A = () => <div></div>
-      // × () => <div></div>
-      if (!t.isVariableDeclarator(path.parent)) return
-      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
-      if (!returnStatement) return
-      const filename = state.file.opts.sourceFileName
-      const fnName = (path.parent.id as t.Identifier).name || ''
-      const analysisData = analyzeJsxFnComp(path, state, fnName)
-      buildJsxFnComponentToVueDefineComponent(path, state, {
-        returnStatement,
-        fnName,
-        ...analysisData,
-      })
-    },
-  },
   JSXElement: {
     exit(path, state) {
       path.replaceWith(transformJSXElement(path, state))

@@ -1,8 +1,8 @@
-import type { NodePath } from '@babel/traverse'
+import { type NodePath, type Visitor } from '@babel/traverse'
 import t from '@babel/types'
-import type { analyzeJsxFnComp } from './analyze'
-import type { State } from './interface'
-import { createIdentifier, VUE_DFC } from './utils'
+import { analyzeJsxFnComp } from './analyze'
+import type { State, Slots } from './interface'
+import { createIdentifier, isVueDfc, VUE_DFC } from './utils'
 
 export function buildJsxFnComponentToVueDefineComponent(
   path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
@@ -183,3 +183,64 @@ export function buildJsxFnComponentToVueDefineComponent(
     path.replaceWith(jsxFactory)
   }
 }
+
+const isReturnJsxElementAndGetReturnStatement = (
+  parentPath: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
+) => {
+  let isJsxFn = false
+  let returnStatement: NodePath<t.ReturnStatement> | undefined
+  parentPath.traverse({
+    ReturnStatement(returnPath) {
+      // skip ts error
+      returnPath.traverse({
+        JSXElement(jsxPath) {
+          isJsxFn = true
+          returnStatement = returnPath
+          jsxPath.stop()
+          returnPath.stop()
+        },
+      })
+    },
+  })
+
+  return isJsxFn ? returnStatement : undefined
+}
+
+const visitor: Visitor<State> = {
+  FunctionDeclaration: {
+    enter(path, state) {
+      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
+      if (!returnStatement) return
+      const filename = state.file.opts.sourceFileName
+      const fnName = path.node.id?.name || ''
+      const analysisData = analyzeJsxFnComp(path, state, fnName)
+      buildJsxFnComponentToVueDefineComponent(path, state, {
+        returnStatement,
+        fnName,
+        ...analysisData,
+      })
+    },
+  },
+  ArrowFunctionExpression: {
+    enter(path, state) {
+      // √ () => {}
+      // × /* VUE DFC */() => {}
+      if (isVueDfc(path.node)) return
+      // √ const A = () => <div></div>
+      // × () => <div></div>
+      if (!t.isVariableDeclarator(path.parent)) return
+      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
+      if (!returnStatement) return
+      const filename = state.file.opts.sourceFileName
+      const fnName = (path.parent.id as t.Identifier).name || ''
+      const analysisData = analyzeJsxFnComp(path, state, fnName)
+      buildJsxFnComponentToVueDefineComponent(path, state, {
+        returnStatement,
+        fnName,
+        ...analysisData,
+      })
+    },
+  },
+}
+
+export default visitor

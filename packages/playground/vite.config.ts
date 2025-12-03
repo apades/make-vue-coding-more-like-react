@@ -7,8 +7,9 @@ export default defineConfig({
   plugins: [
     vueJsx({
       // options are passed on to @vue/babel-plugin-jsx
-      mergeProps: true,
-      enableObjectSlots: true,
+      // mergeProps: true,
+      // enableObjectSlots: true,
+      resolveType: true,
     }),
   ],
   server: {

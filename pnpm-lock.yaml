@@ -127,10 +127,10 @@ importers:
       '@babel/types':
         specifier: catalog:babel
         version: 7.28.5
-      '@vue/babel-helper-vue-transform-on':
+      '@mvcmlr/babel-helper-vue-transform-on':
         specifier: workspace:*
         version: link:../babel-helper-vue-transform-on
-      '@vue/babel-plugin-resolve-type':
+      '@mvcmlr/babel-plugin-resolve-type':
         specifier: workspace:*
         version: link:../babel-plugin-resolve-type
       '@vue/shared':
@@ -146,6 +146,9 @@ importers:
       '@babel/core':
         specifier: catalog:babel
         version: 7.28.5
+      '@babel/plugin-syntax-typescript':
+        specifier: ^7.27.1
+        version: 7.27.1(@babel/core@7.28.5)
       '@babel/plugin-transform-typescript':
         specifier: ^7.28.5
         version: 7.28.5(@babel/core@7.28.5)
