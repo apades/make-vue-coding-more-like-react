@@ -1,15 +1,15 @@
 # make Vue coding more like React
 
-- [简体中文](./README-ZH.md)
+- [English README](./README.md)
 
-As the title says
+如标题所述
 <details>
   <summary>
     <b>Why this ?</b>
   </summary>
   <br>
 
-If you have used Vue's official jsx plugin, you will get how strange the syntax is, especially when you switch from React. You need to manually define **props + defineComponent.setup** and feel uncomfortable writing it.
+如果你用过Vue官方的jsx插件，会发现语法有一股怪味，尤其是从React转过来，面对**props需要手动定义 + defineComponent.setup**写法浑身难受
 
 ```tsx
 import { ref, type VNode, defineComponent } from 'vue'
@@ -42,7 +42,7 @@ const Child = defineComponent<Props>({
 })
 ```
 
-This project is to solve the above verbose writing method and turn to React to use only one function to define jsx component writing method, [example](#Example)
+该项目就是为了解决上面的啰嗦写法，转向React只用一个函数定义jsx component的写法，具体[example](#Example)
 </details>
 
 
