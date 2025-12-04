@@ -1,7 +1,17 @@
-import { type NodePath, type Visitor } from '@babel/traverse'
+import fs from 'node:fs'
+import nodePath from 'node:path'
+import { codeFrameColumns } from '@babel/code-frame'
+import type * as BabelCore from '@babel/core'
+import { addNamed } from '@babel/helper-module-imports'
+import { declare } from '@babel/helper-plugin-utils'
+import { type NodePath } from '@babel/traverse'
 import t from '@babel/types'
+import {
+  type SimpleTypeResolveContext,
+  type SimpleTypeResolveOptions,
+} from '@vue/compiler-sfc'
 import { analyzeJsxFnComp } from './analyze'
-import type { State, Slots } from './interface'
+import type { State } from './interface'
 import { createIdentifier, isVueDfc, VUE_DFC } from './utils'
 
 export function buildJsxFnComponentToVueDefineComponent(
@@ -22,7 +32,7 @@ export function buildJsxFnComponentToVueDefineComponent(
 
   const fnName = params.fnName
 
-  const [jsxProps, jsxSlot] = params.params
+  const jsxProps = params.props
 
   const returnStatement = params.returnStatement.node
 
@@ -113,12 +123,7 @@ export function buildJsxFnComponentToVueDefineComponent(
       t.callExpression(createIdentifier(state, 'defineComponent'), [
         t.objectExpression([
           t.objectProperty(t.identifier('name'), t.stringLiteral(fnName)),
-          t.objectProperty(
-            t.identifier('props'),
-            t.arrayExpression(
-              Object.keys(jsxProps).map((key) => t.stringLiteral(key)),
-            ),
-          ),
+          t.objectProperty(t.identifier('props'), jsxProps),
           // t.objectProperty(
           //   t.identifier('slots'),
           //   t.identifier(JSX_COMP_SLOT_NAME),
@@ -206,41 +211,119 @@ const isReturnJsxElementAndGetReturnStatement = (
   return isJsxFn ? returnStatement : undefined
 }
 
-const visitor: Visitor<State> = {
-  FunctionDeclaration: {
-    enter(path, state) {
-      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
-      if (!returnStatement) return
-      const filename = state.file.opts.sourceFileName
-      const fnName = path.node.id?.name || ''
-      const analysisData = analyzeJsxFnComp(path, state, fnName)
-      buildJsxFnComponentToVueDefineComponent(path, state, {
-        returnStatement,
-        fnName,
-        ...analysisData,
-      })
-    },
-  },
-  ArrowFunctionExpression: {
-    enter(path, state) {
-      // √ () => {}
-      // × /* VUE DFC */() => {}
-      if (isVueDfc(path.node)) return
-      // √ const A = () => <div></div>
-      // × () => <div></div>
-      if (!t.isVariableDeclarator(path.parent)) return
-      const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
-      if (!returnStatement) return
-      const filename = state.file.opts.sourceFileName
-      const fnName = (path.parent.id as t.Identifier).name || ''
-      const analysisData = analyzeJsxFnComp(path, state, fnName)
-      buildJsxFnComponentToVueDefineComponent(path, state, {
-        returnStatement,
-        fnName,
-        ...analysisData,
-      })
-    },
-  },
-}
+const plugin: (
+  api: object,
+  options: SimpleTypeResolveOptions | null | undefined,
+  dirname: string,
+) => BabelCore.PluginObj<State> = declare(({ types: t }, options, dirname) => {
+  let ctx: SimpleTypeResolveContext | undefined
+  let helpers: Set<string> | undefined
 
-export default visitor
+  options = {
+    fs: {
+      readFile: (p) => fs.readFileSync(nodePath.resolve(dirname, p), 'utf-8'),
+      fileExists: (p) => fs.existsSync(nodePath.resolve(dirname, p)),
+      realpath: (p) => fs.realpathSync(nodePath.resolve(dirname, p), 'utf-8'),
+    },
+  }
+  const updateResolveTypeFs = (nowFileDirname: string) => {
+    options!.fs!.readFile = (p) =>
+      fs.readFileSync(nodePath.resolve(nowFileDirname, p), 'utf-8')
+    options!.fs!.fileExists = (p) =>
+      fs.existsSync(nodePath.resolve(nowFileDirname, p))
+    options!.fs!.realpath = (p) =>
+      fs.realpathSync(nodePath.resolve(nowFileDirname, p), 'utf-8')
+  }
+
+  return {
+    name: 'transform-vue-define-component',
+    pre(file) {
+      const filename = file.opts.filename || 'unknown.js'
+      helpers = new Set()
+      ctx = {
+        filename: filename,
+        source: file.code,
+        options,
+        ast: [...file.ast.program.body],
+        isCE: false,
+        error(msg, node) {
+          throw new Error(
+            `[@vue/babel-plugin-resolve-type] ${msg}\n\n${filename}\n${codeFrameColumns(
+              file.code,
+              {
+                start: {
+                  line: node.loc!.start.line,
+                  column: node.loc!.start.column + 1,
+                },
+                end: {
+                  line: node.loc!.end.line,
+                  column: node.loc!.end.column + 1,
+                },
+              },
+            )}`,
+          )
+        },
+        helper(key) {
+          helpers!.add(key)
+          return `_${key}`
+        },
+        getString(node) {
+          return file.code.slice(node.start!, node.end!)
+        },
+        propsTypeDecl: undefined,
+        propsRuntimeDefaults: undefined,
+        propsDestructuredBindings: {},
+        emitsTypeDecl: undefined,
+      }
+    },
+    post(file) {
+      for (const helper of helpers!) {
+        addNamed(file.path, `_${helper}`, 'vue')
+      }
+    },
+    visitor: {
+      Program: {
+        enter(_, state) {
+          const filename = state.file.opts.sourceFileName!
+          updateResolveTypeFs(nodePath.dirname(filename))
+        },
+      },
+      FunctionDeclaration: {
+        enter(path, state) {
+          const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
+          if (!returnStatement) return
+          const filename = state.file.opts.sourceFileName
+          const fnName = path.node.id?.name || ''
+          const analysisData = analyzeJsxFnComp(path, ctx!)
+          buildJsxFnComponentToVueDefineComponent(path, state, {
+            returnStatement,
+            fnName,
+            ...analysisData,
+          })
+        },
+      },
+      ArrowFunctionExpression: {
+        enter(path, state) {
+          // √ () => {}
+          // × /* VUE DFC */() => {}
+          if (isVueDfc(path.node)) return
+          // √ const A = () => <div></div>
+          // × () => <div></div>
+          if (!t.isVariableDeclarator(path.parent)) return
+          const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
+          if (!returnStatement) return
+          const filename = state.file.opts.sourceFileName
+          const fnName = (path.parent.id as t.Identifier).name || ''
+          const analysisData = analyzeJsxFnComp(path, ctx!)
+          buildJsxFnComponentToVueDefineComponent(path, state, {
+            returnStatement,
+            fnName,
+            ...analysisData,
+          })
+        },
+      },
+    },
+  }
+})
+
+export default plugin

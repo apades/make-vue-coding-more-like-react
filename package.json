@@ -3,6 +3,9 @@
   "author": "apades",
   "description": "As the title says",
   "private": true,
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "pnpm run \"/^dev:.*/\"",
     "dev:babel-jsx": "tsdown --watch --sourcemap",

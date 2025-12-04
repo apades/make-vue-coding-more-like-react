@@ -109,12 +109,18 @@ importers:
 
   packages/babel-plugin-jsx:
     dependencies:
+      '@babel/code-frame':
+        specifier: ^7.27.1
+        version: 7.27.1
       '@babel/helper-module-imports':
         specifier: catalog:babel
         version: 7.27.1
       '@babel/helper-plugin-utils':
         specifier: catalog:babel
         version: 7.27.1
+      '@babel/parser':
+        specifier: catalog:babel
+        version: 7.28.5
       '@babel/plugin-syntax-jsx':
         specifier: catalog:babel
         version: 7.27.1(@babel/core@7.28.5)
@@ -133,6 +139,9 @@ importers:
       '@mvcmlr/babel-plugin-resolve-type':
         specifier: workspace:*
         version: link:../babel-plugin-resolve-type
+      '@vue/compiler-sfc':
+        specifier: ^3.5.25
+        version: 3.5.25
       '@vue/shared':
         specifier: catalog:vue
         version: 3.5.25
@@ -158,6 +167,9 @@ importers:
       '@rollup/plugin-babel':
         specifier: ^6.1.0
         version: 6.1.0(@babel/core@7.28.5)(@types/babel__core@7.20.5)(rollup@4.53.3)
+      '@types/babel__code-frame':
+        specifier: ^7.0.6
+        version: 7.0.6
       '@types/babel__template':
         specifier: ^7.4.4
         version: 7.4.4

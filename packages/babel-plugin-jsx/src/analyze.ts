@@ -1,88 +1,141 @@
+import type * as BabelCore from '@babel/core'
+import { parseExpression } from '@babel/parser'
 import { type NodePath } from '@babel/traverse'
 import t from '@babel/types'
+import {
+  extractRuntimeProps,
+  type SimpleTypeResolveContext,
+} from '@vue/compiler-sfc'
 import { getJsxFnParams } from './ast'
 import type { State } from './interface'
-import { getTsMorph, resolveJsxCompFnProps } from './ts-morph'
-import type { TsMorphCache } from './types'
+
+function getTypeAnnotation(node: BabelCore.types.Node) {
+  if (
+    'typeAnnotation' in node &&
+    node.typeAnnotation &&
+    node.typeAnnotation.type === 'TSTypeAnnotation'
+  ) {
+    return node.typeAnnotation.typeAnnotation
+  }
+}
+
+function analyzeFnPropsType(
+  fnProps: t.FunctionParameter,
+  ctx: SimpleTypeResolveContext,
+) {
+  // function App(props = {a: string} ) {}
+  //                      ^^^^^^^^^^^
+  if (t.isAssignmentPattern(fnProps)) {
+    ctx.propsTypeDecl = getTypeAnnotation(fnProps.left)
+    ctx.propsRuntimeDefaults = fnProps.right
+    return
+  }
+
+  const typeAnnotation = getTypeAnnotation(fnProps)
+  if (t.isTSTypeReference(typeAnnotation)) {
+    ctx.propsTypeDecl = resolveTypeReference(typeAnnotation as any, ctx)
+    return
+  }
+
+  ctx.propsTypeDecl = typeAnnotation
+}
+
+function resolveTypeReference(
+  typeNode: t.FlowType | t.TSTypeParameter,
+  ctx: SimpleTypeResolveContext,
+) {
+  if (!ctx) return
+
+  if (!t.isTSTypeReference(typeNode)) return
+  const typeName = getTypeReferenceName(typeNode)
+  if (!typeName) return
+  const typeDeclaration = findTypeDeclaration(typeName, ctx)
+
+  return typeDeclaration as t.Node
+}
+
+function getTypeReferenceName(typeRef: BabelCore.types.TSTypeReference) {
+  if (t.isIdentifier(typeRef.typeName)) {
+    return typeRef.typeName.name
+  } else if (t.isTSQualifiedName(typeRef.typeName)) {
+    const parts: string[] = []
+    let current: BabelCore.types.TSEntityName = typeRef.typeName
+
+    while (t.isTSQualifiedName(current)) {
+      if (t.isIdentifier(current.right)) {
+        parts.unshift(current.right.name)
+      }
+      current = current.left
+    }
+
+    if (t.isIdentifier(current)) {
+      parts.unshift(current.name)
+    }
+
+    return parts.join('.')
+  }
+  return null
+}
+
+function findTypeDeclaration(typeName: string, ctx: SimpleTypeResolveContext) {
+  if (!ctx) return null
+
+  for (const statement of ctx.ast) {
+    if (
+      t.isTSInterfaceDeclaration(statement) &&
+      statement.id.name === typeName
+    ) {
+      return t.tsTypeLiteral(statement.body.body)
+    }
+
+    if (
+      t.isTSTypeAliasDeclaration(statement) &&
+      statement.id.name === typeName
+    ) {
+      return statement.typeAnnotation
+    }
+
+    if (t.isExportNamedDeclaration(statement) && statement.declaration) {
+      if (
+        t.isTSInterfaceDeclaration(statement.declaration) &&
+        statement.declaration.id.name === typeName
+      ) {
+        return t.tsTypeLiteral(statement.declaration.body.body)
+      }
+
+      if (
+        t.isTSTypeAliasDeclaration(statement.declaration) &&
+        statement.declaration.id.name === typeName
+      ) {
+        return statement.declaration.typeAnnotation
+      }
+    }
+  }
+
+  return null
+}
 
 export function analyzeJsxFnComp(
   path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
-  state: State,
-  fnName: string,
+  ctx: SimpleTypeResolveContext,
 ) {
-  const isArrowFn = t.isArrowFunctionExpression(path.node)
-  const propsRecord: Record<string, t.TSPropertySignature> = {}
-  const slotRecord: Record<
-    string,
-    {
-      path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>
-    }
-  > = {}
-  const [fnProps, fnRef] = getJsxFnParams(path) as [
-    t.Identifier | t.ObjectPattern,
-    t.Identifier,
-  ]
+  const fnProps = getJsxFnParams(path)
 
   const rs = {
-    params: [propsRecord, slotRecord],
+    props: parseExpression('{}'),
     propsName: 'props' as string,
   } as const
 
   if (!fnProps) return rs
-  // TODO objectPattern type
-  if (t.isObjectPattern(fnProps))
-    throw Error('No support `{ a, b } : props` objectPattern type yet')
-  ;(rs as any).propsName = fnProps.name
-  //   path.node.params[0]
-
-  const propsTypeAnnotation = fnProps.typeAnnotation
-  // TODO ts reference
-  if (!t.isTSTypeAnnotation(propsTypeAnnotation)) return rs
-
-  const typeAnnotation = propsTypeAnnotation.typeAnnotation
-  const isContainsGenericTypeParams =
-    (path.node.typeParameters as t.TSTypeParameterDeclaration)?.params?.length >
-    0
-  const isTypeLiteralProps = t.isTSTypeLiteral(typeAnnotation)
-
-  // let tsMorphAnalyzedPropsInfo: Record<string, VinePropMeta> | undefined
-  let tsMorphCache: TsMorphCache | undefined
-
-  // Should initialize ts-morph when props is a type alias
-  // or that type literal contains generic type parameters
-  if (!isTypeLiteralProps || isContainsGenericTypeParams) {
-    tsMorphCache = getTsMorph()
-    // TODO [across files] reference type
-    const tsMorphAnalyzedPropsInfo = resolveJsxCompFnProps({
-      tsMorphCache: getTsMorph(),
-      fnName,
-      state,
-    })
-    return rs
+  if (t.isIdentifier(fnProps)) {
+    ;(rs as any).propsName = fnProps.name
   }
 
-  if (isTypeLiteralProps) {
-    ;(typeAnnotation.members as t.TSPropertySignature[]).forEach((member) => {
-      const { key } = member
-      if (
-        (!t.isIdentifier(key) && !t.isStringLiteral(key)) ||
-        !member.typeAnnotation
-      ) {
-        return
-      }
+  analyzeFnPropsType(fnProps, ctx)
 
-      const propName = t.isIdentifier(key) ? key.name : key.value
-      // TODO get prop type is vNode return, and add to slot
-      const propType = member.typeAnnotation.typeAnnotation
+  const runtimeProps = extractRuntimeProps(ctx)
+  if (!runtimeProps) return rs
+  ;(rs as any).props = parseExpression(runtimeProps)
 
-      propsRecord[propName] = member
-    })
-    return rs
-  }
-
-  if (tsMorphCache) {
-    return rs
-  }
-
-  throw Error('Not implemented')
+  return rs
 }

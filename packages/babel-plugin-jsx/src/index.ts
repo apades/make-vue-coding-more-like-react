@@ -1,21 +1,15 @@
-import fs from 'node:fs'
-import nodePath from 'node:path'
-import t from '@babel/types'
 import type * as BabelCore from '@babel/core'
+import { declare } from '@babel/helper-plugin-utils'
 import _template from '@babel/template'
-
+import t from '@babel/types'
+import { addNamed, addNamespace, isModule } from '@babel/helper-module-imports'
 // @ts-expect-error
 import _syntaxJsx from '@babel/plugin-syntax-jsx'
-import { addNamed, addNamespace, isModule } from '@babel/helper-module-imports'
-import { type NodePath, type Visitor } from '@babel/traverse'
-import ResolveType from '@mvcmlr/babel-plugin-resolve-type'
-import { declare } from '@babel/helper-plugin-utils'
-import { type Options } from '@mvcmlr/babel-plugin-resolve-type'
-import transformVueJSX from './transform-vue-jsx'
-import sugarFragment from './sugar-fragment'
-import transformVueDefineComponent from './transform-vue-define-component.ts'
+import { type NodePath, visitors } from '@babel/traverse'
 import type { State, VueJSXPluginOptions } from './interface'
-import { createTsMorph } from './ts-morph'
+import sugarFragmentVisitor from './sugar-fragment'
+import transformVueDefineComponentPlugin from './transform-vue-define-component'
+import transformVueJSXVisitor from './transform-vue-jsx'
 
 export { VueJSXPluginOptions }
 
@@ -55,184 +49,164 @@ const plugin: (
   BabelCore.PluginObj<State>
 >((api, opt, dirname) => {
   const { types } = api
-  let resolveType: BabelCore.PluginObj<BabelCore.PluginPass> | undefined
-  if (opt.resolveType) {
-    if (typeof opt.resolveType === 'boolean')
-      opt.resolveType = {
-        fs: {
-          readFile: (p) =>
-            fs.readFileSync(nodePath.resolve(dirname, p), 'utf-8'),
-          fileExists: (p) => fs.existsSync(nodePath.resolve(dirname, p)),
-          realpath: (p) =>
-            fs.realpathSync(nodePath.resolve(dirname, p), 'utf-8'),
-        },
-      }
-    resolveType = ResolveType(api, opt.resolveType, dirname)
-  }
-
-  const updateResolveTypeFs = (nowFileDirname: string) => {
-    ;(opt.resolveType as Options)!.fs!.readFile = (p) =>
-      fs.readFileSync(nodePath.resolve(nowFileDirname, p), 'utf-8')
-    ;(opt.resolveType as Options)!.fs!.fileExists = (p) =>
-      fs.existsSync(nodePath.resolve(nowFileDirname, p))
-    ;(opt.resolveType as Options)!.fs!.realpath = (p) =>
-      fs.realpathSync(nodePath.resolve(nowFileDirname, p), 'utf-8')
-  }
+  const transformVueDefineComponent = transformVueDefineComponentPlugin(
+    api,
+    {},
+    dirname,
+  )
 
   // createTsMorph({
   //   fileId: dirname,
   // })
   // console.log('dirname', dirname, api)
   return {
-    ...(resolveType || {}),
+    ...transformVueDefineComponent,
     name: 'babel-plugin-jsx',
     inherits: /*#__PURE__*/ interopDefault(syntaxJsx),
-    visitor: {
-      ...(resolveType?.visitor as Visitor<State>),
-      ...transformVueJSX,
-      // ...transformVueDefineComponent,
-      ...sugarFragment,
-      Program: {
-        enter(path, state) {
-          const filename = state.file.opts.sourceFileName!
-          updateResolveTypeFs(nodePath.dirname(filename))
-
-          if (hasJSX(path)) {
-            const vueImportNames = [
-              'createVNode',
-              'Fragment',
-              'resolveComponent',
-              'withDirectives',
-              'vShow',
-              'vModelSelect',
-              'vModelText',
-              'vModelCheckbox',
-              'vModelRadio',
-              'vModelText',
-              'vModelDynamic',
-              'resolveDirective',
-              'mergeProps',
-              'createTextVNode',
-              'defineComponent',
-              'isVNode',
-            ]
-            if (isModule(path)) {
-              // import { createVNode } from "vue";
-              const importMap: Record<
-                string,
-                t.MemberExpression | t.Identifier
-              > = {}
-              vueImportNames.forEach((name) => {
-                state.set(name, () => {
-                  if (importMap[name]) {
-                    return types.cloneNode(importMap[name])
-                  }
-                  const identifier = addNamed(path, name, 'vue', {
-                    ensureLiveReference: true,
-                  })
-                  importMap[name] = identifier
-                  return identifier
-                })
-              })
-              const enableObjectSlots = true
-              if (enableObjectSlots) {
-                state.set('@vue/babel-plugin-jsx/runtimeIsSlot', () => {
-                  if (importMap.runtimeIsSlot) {
-                    return importMap.runtimeIsSlot
-                  }
-                  const { name: isVNodeName } = state.get(
-                    'isVNode',
-                  )() as t.Identifier
-                  const isSlot = path.scope.generateUidIdentifier('isSlot')
-                  const ast = template.ast`
-                    function ${isSlot.name}(s) {
-                      return typeof s === 'function' || (Object.prototype.toString.call(s) === '[object Object]' && !${isVNodeName}(s));
+    visitor: visitors.merge([
+      transformVueJSXVisitor,
+      transformVueDefineComponent.visitor,
+      sugarFragmentVisitor,
+      {
+        Program: {
+          enter(path, state) {
+            if (hasJSX(path)) {
+              const vueImportNames = [
+                'createVNode',
+                'Fragment',
+                'resolveComponent',
+                'withDirectives',
+                'vShow',
+                'vModelSelect',
+                'vModelText',
+                'vModelCheckbox',
+                'vModelRadio',
+                'vModelText',
+                'vModelDynamic',
+                'resolveDirective',
+                'mergeProps',
+                'createTextVNode',
+                'defineComponent',
+                'isVNode',
+              ]
+              if (isModule(path)) {
+                // import { createVNode } from "vue";
+                const importMap: Record<
+                  string,
+                  t.MemberExpression | t.Identifier
+                > = {}
+                vueImportNames.forEach((name) => {
+                  state.set(name, () => {
+                    if (importMap[name]) {
+                      return types.cloneNode(importMap[name])
                     }
-                  `
-                  const lastImport = (path.get('body') as NodePath[])
-                    .filter((p) => p.isImportDeclaration())
-                    .pop()
-                  if (lastImport) {
-                    lastImport.insertAfter(ast)
-                  }
-                  importMap.runtimeIsSlot = isSlot
-                  return isSlot
-                })
-              }
-            } else {
-              // var _vue = require('vue');
-              let sourceName: t.Identifier
-              vueImportNames.forEach((name) => {
-                state.set(name, () => {
-                  if (!sourceName) {
-                    sourceName = addNamespace(path, 'vue', {
+                    const identifier = addNamed(path, name, 'vue', {
                       ensureLiveReference: true,
                     })
-                  }
-                  return t.memberExpression(sourceName, t.identifier(name))
+                    importMap[name] = identifier
+                    return identifier
+                  })
                 })
-              })
-
-              const helpers: Record<string, t.Identifier> = {}
-
-              const enableObjectSlots = true
-              if (enableObjectSlots) {
-                state.set('@vue/babel-plugin-jsx/runtimeIsSlot', () => {
-                  if (helpers.runtimeIsSlot) {
-                    return helpers.runtimeIsSlot
-                  }
-                  const isSlot = path.scope.generateUidIdentifier('isSlot')
-                  const { object: objectName } = state.get(
-                    'isVNode',
-                  )() as t.MemberExpression
-                  const ast = template.ast`
-                    function ${isSlot.name}(s) {
-                      return typeof s === 'function' || (Object.prototype.toString.call(s) === '[object Object]' && !${
-                        (objectName as t.Identifier).name
-                      }.isVNode(s));
+                const enableObjectSlots = true
+                if (enableObjectSlots) {
+                  state.set('@vue/babel-plugin-jsx/runtimeIsSlot', () => {
+                    if (importMap.runtimeIsSlot) {
+                      return importMap.runtimeIsSlot
                     }
-                  `
-
-                  const nodePaths = path.get('body') as NodePath[]
-                  const lastImport = nodePaths
-                    .filter(
-                      (p) =>
-                        p.isVariableDeclaration() &&
-                        p.node.declarations.some(
-                          (d) =>
-                            (d.id as t.Identifier)?.name === sourceName.name,
-                        ),
-                    )
-                    .pop()
-                  if (lastImport) {
-                    lastImport.insertAfter(ast)
-                  }
-                  return isSlot
+                    const { name: isVNodeName } = state.get(
+                      'isVNode',
+                    )() as t.Identifier
+                    const isSlot = path.scope.generateUidIdentifier('isSlot')
+                    const ast = template.ast`
+                      function ${isSlot.name}(s) {
+                        return typeof s === 'function' || (Object.prototype.toString.call(s) === '[object Object]' && !${isVNodeName}(s));
+                      }
+                    `
+                    const lastImport = (path.get('body') as NodePath[])
+                      .filter((p) => p.isImportDeclaration())
+                      .pop()
+                    if (lastImport) {
+                      lastImport.insertAfter(ast)
+                    }
+                    importMap.runtimeIsSlot = isSlot
+                    return isSlot
+                  })
+                }
+              } else {
+                // var _vue = require('vue');
+                let sourceName: t.Identifier
+                vueImportNames.forEach((name) => {
+                  state.set(name, () => {
+                    if (!sourceName) {
+                      sourceName = addNamespace(path, 'vue', {
+                        ensureLiveReference: true,
+                      })
+                    }
+                    return t.memberExpression(sourceName, t.identifier(name))
+                  })
                 })
+
+                const helpers: Record<string, t.Identifier> = {}
+
+                const enableObjectSlots = true
+                if (enableObjectSlots) {
+                  state.set('@vue/babel-plugin-jsx/runtimeIsSlot', () => {
+                    if (helpers.runtimeIsSlot) {
+                      return helpers.runtimeIsSlot
+                    }
+                    const isSlot = path.scope.generateUidIdentifier('isSlot')
+                    const { object: objectName } = state.get(
+                      'isVNode',
+                    )() as t.MemberExpression
+                    const ast = template.ast`
+                      function ${isSlot.name}(s) {
+                        return typeof s === 'function' || (Object.prototype.toString.call(s) === '[object Object]' && !${
+                          (objectName as t.Identifier).name
+                        }.isVNode(s));
+                      }
+                    `
+
+                    const nodePaths = path.get('body') as NodePath[]
+                    const lastImport = nodePaths
+                      .filter(
+                        (p) =>
+                          p.isVariableDeclaration() &&
+                          p.node.declarations.some(
+                            (d) =>
+                              (d.id as t.Identifier)?.name === sourceName.name,
+                          ),
+                      )
+                      .pop()
+                    if (lastImport) {
+                      lastImport.insertAfter(ast)
+                    }
+                    return isSlot
+                  })
+                }
               }
-            }
 
-            const {
-              opts: { pragma = '' },
-              file,
-            } = state
+              const {
+                opts: { pragma = '' },
+                file,
+              } = state
 
-            if (pragma) {
-              state.set('createVNode', () => t.identifier(pragma))
-            }
+              if (pragma) {
+                state.set('createVNode', () => t.identifier(pragma))
+              }
 
-            if (file.ast.comments) {
-              for (const comment of file.ast.comments) {
-                const jsxMatches = JSX_ANNOTATION_REGEX.exec(comment.value)
-                if (jsxMatches) {
-                  state.set('createVNode', () => t.identifier(jsxMatches[1]))
+              if (file.ast.comments) {
+                for (const comment of file.ast.comments) {
+                  const jsxMatches = JSX_ANNOTATION_REGEX.exec(comment.value)
+                  if (jsxMatches) {
+                    state.set('createVNode', () => t.identifier(jsxMatches[1]))
+                  }
                 }
               }
             }
-          }
+          },
         },
       },
-    },
+    ]),
   }
 })
 

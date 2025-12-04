@@ -1,26 +1,70 @@
-import { defineComponent, ref } from 'vue'
-import { type PropsB } from './type'
+import { ref } from 'vue'
+import CompB from './CompB'
+type ComProps = {
+  foo: string
+  bar: number
+  a?: number
+  d: () => void
+}
 
-type PropsA = {
-  msg: string
-  optional?: boolean
-} & PropsB
+const ChildComp = (
+  unuProps: ComProps,
+  // ref: any,
+) => {
+  let com = unuProps.a + unuProps.foo
+  const val = ref(0)
 
-const CompProps = defineComponent<PropsA>((props) => {
-  return () => <div>inner:{props.msg}</div>
-})
+  if (unuProps.a) {
+    return null
+  }
 
-const App = defineComponent({
-  setup() {
-    const count = ref(0)
-    return () => (
-      <div onClick={() => count.value++}>
-        <div>out count {count.value}</div>
-        <hr />
-        <CompProps msg={`inner count ${count.value}`} />
-      </div>
-    )
-  },
-})
+  return (
+    <div>
+      <div>AnotherComp</div>
+      <p>foo:{unuProps.foo}</p>
+      <p>bar:{unuProps.bar}</p>
+      <p
+        onClick={() => {
+          val.value++
+        }}
+      >
+        val: {val.value}
+      </p>
+    </div>
+  )
+}
+
+function App() {
+  const count = ref(1)
+  return (
+    <div>
+      <p>this is APP</p>
+      <ChildComp bar={1} foo="hello" d={() => {}} />
+      <hr />
+
+      <CompB
+        a="asd"
+        footer={(inner) => (
+          <div onClick={() => count.value++}>
+            text: <p style={{ color: 'red' }}>{inner}</p>
+            <p>props count : {count.value}</p>
+          </div>
+        )}
+      >
+        <p style={{ color: 'green' }}>default slot count {count.value}</p>
+      </CompB>
+    </div>
+  )
+}
 
 export default App
+
+// const ArrowFn: FC<ComProps> = (props) => {
+//   return (
+//     <div>
+//       <div>AnotherComp</div>
+//       <p>foo:{props.num}</p>
+//       <p>bar:{props.b}</p>
+//     </div>
+//   )
+// }

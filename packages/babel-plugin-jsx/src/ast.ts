@@ -6,14 +6,12 @@ export function getJsxFnParams(
   path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
 ) {
   if (t.isFunctionDeclaration(path.node)) {
-    return path.node.params
+    return path.node.params[0] as t.Identifier
   }
   if (
     t.isArrowFunctionExpression(path.node) ||
     t.isFunctionExpression(path.node)
   ) {
-    return (path.node as ArrowFunctionExpression).params
+    return path.node.params[0] as t.Identifier
   }
-
-  return []
 }
