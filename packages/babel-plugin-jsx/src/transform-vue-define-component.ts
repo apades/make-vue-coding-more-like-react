@@ -80,15 +80,13 @@ export function buildJsxFnComponentToVueDefineComponent(
               [t.identifier('_'), t.identifier('key')],
               t.blockStatement([
                 t.ifStatement(
-                  t.callExpression(
-                    t.memberExpression(
-                      t.identifier(JSX_COMP_SLOT_NAME),
-                      t.identifier('includes'),
-                    ),
-                    [t.identifier('key')],
+                  t.binaryExpression(
+                    '===',
+                    t.identifier('key'),
+                    t.stringLiteral('children'),
                   ),
                   t.returnStatement(
-                    t.callExpression(
+                    t.optionalCallExpression(
                       t.memberExpression(
                         t.memberExpression(
                           t.identifier(JSX_COMP_CTX_NAME),
@@ -97,6 +95,7 @@ export function buildJsxFnComponentToVueDefineComponent(
                         t.identifier('default'),
                       ),
                       [],
+                      true,
                     ),
                   ),
                 ),
