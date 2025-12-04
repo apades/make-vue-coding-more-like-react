@@ -115,3 +115,13 @@ function App() {
 
 export default App
 ```
+
+## Credit
+Code based on:
+- [@vue/babel-plugin-resolve-type](https://github.com/vuejs/babel-plugin-jsx/tree/main/packages/babel-plugin-resolve-type)
+- [@vue/babel-plugin-jsx](https://github.com/vuejs/babel-plugin-jsx/tree/main/packages/babel-plugin-jsx)
+- [@vue/babel-helper-vue-transform-on](https://github.com/vuejs/babel-plugin-jsx/tree/main/packages/babel-helper-vue-transform-on)
+- [@vitejs/plugin-vue-jsx](https://github.com/vitejs/vite-plugin-vue/tree/main/packages/plugin-vue-jsx)
+
+Inspired:
+- [vue-vine](https://github.com/vue-vine/vue-vine)

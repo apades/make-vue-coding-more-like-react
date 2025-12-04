@@ -115,3 +115,13 @@ function App() {
 
 export default App
 ```
+
+## 鸣谢
+代码基于以下项目修改:
+- [@vue/babel-plugin-resolve-type](https://github.com/vuejs/babel-plugin-jsx/tree/main/packages/babel-plugin-resolve-type)
+- [@vue/babel-plugin-jsx](https://github.com/vuejs/babel-plugin-jsx/tree/main/packages/babel-plugin-jsx)
+- [@vue/babel-helper-vue-transform-on](https://github.com/vuejs/babel-plugin-jsx/tree/main/packages/babel-helper-vue-transform-on)
+- [@vitejs/plugin-vue-jsx](https://github.com/vitejs/vite-plugin-vue/tree/main/packages/plugin-vue-jsx)
+
+受启发:
+- [vue-vine](https://github.com/vue-vine/vue-vine)
