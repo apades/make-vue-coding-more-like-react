@@ -47,7 +47,7 @@ function vueJsxPlugin(options: Options = {}): Plugin {
     include = /\.[jt]sx$/,
     exclude,
     babelPlugins = [],
-    defineComponentName = ['defineComponent'],
+    defineComponentName: optDefineComponentName = ['defineComponent'],
     tsPluginOptions = {},
     tsTransform,
     ...babelPluginOptions
@@ -241,6 +241,8 @@ function vueJsxPlugin(options: Options = {}): Plugin {
           const declaredComponents: string[] = []
           const hotComponents: HotComponent[] = []
 
+          let defineComponentName = optDefineComponentName
+
           for (const node of result.ast!.program.body) {
             if (node.type === 'VariableDeclaration') {
               const names = parseComponentDecls(node, defineComponentName)
@@ -248,6 +250,22 @@ function vueJsxPlugin(options: Options = {}): Plugin {
                 declaredComponents.push(...names)
               }
             }
+
+            // analyze import statements
+            ;(() => {
+              if (node.type !== 'ImportDeclaration') return
+              const source = node.source.value
+              if (source !== 'vue') return
+
+              for (const spec of node.specifiers) {
+                if (spec.type !== 'ImportSpecifier') continue
+                defineComponentName.forEach((name, i) => {
+                  if ((spec.imported as any).name === name) {
+                    defineComponentName[i] = spec.local.name
+                  }
+                })
+              }
+            })()
 
             if (node.type === 'ExportNamedDeclaration') {
               if (

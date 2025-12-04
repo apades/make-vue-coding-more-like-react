@@ -117,7 +117,7 @@ export function buildJsxFnComponentToVueDefineComponent(
 
   const innerJsxCompFnWrapper = t.variableDeclaration('const', [
     t.variableDeclarator(
-      t.identifier(JSX_COMP_NAME),
+      t.identifier(fnName),
       // TODO defineComponent
       t.callExpression(createIdentifier(state, 'defineComponent'), [
         t.objectExpression([
@@ -172,31 +172,31 @@ export function buildJsxFnComponentToVueDefineComponent(
     ),
   ])
 
-  const factoryArrowFn = t.arrowFunctionExpression(
-    [],
-    t.blockStatement([
-      slotsStatement,
-      innerJsxCompFnWrapper,
-      t.returnStatement(t.identifier(JSX_COMP_NAME)),
-    ]),
-  )
-  factoryArrowFn.leadingComments = [
-    {
-      type: 'CommentBlock',
-      value: VUE_DFC,
-    },
-  ]
-  const jsxFactory = t.variableDeclaration('const', [
-    t.variableDeclarator(
-      t.identifier(fnName),
-      t.callExpression(factoryArrowFn, []),
-    ),
-  ])
+  // const factoryArrowFn = t.arrowFunctionExpression(
+  //   [],
+  //   t.blockStatement([
+  //     slotsStatement,
+  //     innerJsxCompFnWrapper,
+  //     t.returnStatement(t.identifier(JSX_COMP_NAME)),
+  //   ]),
+  // )
+  // factoryArrowFn.leadingComments = [
+  //   {
+  //     type: 'CommentBlock',
+  //     value: VUE_DFC,
+  //   },
+  // ]
+  // const jsxFactory = t.variableDeclaration('const', [
+  //   t.variableDeclarator(
+  //     t.identifier(fnName),
+  //     t.callExpression(factoryArrowFn, []),
+  //   ),
+  // ])
 
   if (isArrowFn) {
-    path.getStatementParent()?.replaceWith(jsxFactory)
+    path.getStatementParent()?.replaceWith(innerJsxCompFnWrapper)
   } else {
-    path.replaceWith(jsxFactory)
+    path.replaceWith(innerJsxCompFnWrapper)
   }
 }
 
