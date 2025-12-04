@@ -135,16 +135,28 @@ export function buildJsxFnComponentToVueDefineComponent(
               t.identifier(JSX_COMP_CTX_NAME),
             ],
             t.blockStatement([
-              t.expressionStatement(
-                t.callExpression(
-                  t.memberExpression(
-                    t.identifier(JSX_COMP_CTX_NAME),
-                    t.identifier('expose'),
-                  ),
-                  // TODO get component expose
-                  [],
-                ),
-              ),
+              ...(params.expose
+                ? [
+                    // t.variableDeclaration('const', [
+                    //   t.variableDeclarator(
+                    //     t.identifier(DEFINE_EXPOSE),
+                    //     t.memberExpression(
+                    //       t.identifier(JSX_COMP_CTX_NAME),
+                    //       t.identifier('expose'),
+                    //     ),
+                    //   ),
+                    // ]),
+                    t.expressionStatement(
+                      t.callExpression(
+                        t.memberExpression(
+                          t.identifier(JSX_COMP_CTX_NAME),
+                          t.identifier('expose'),
+                        ),
+                        [params.expose],
+                      ),
+                    ),
+                  ]
+                : []),
               propsProxyStatement,
               ...bodyWithoutReturn,
               t.returnStatement(innerJsxArrowFn),

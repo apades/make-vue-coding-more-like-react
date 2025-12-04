@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import CompB from './CompB'
+import CompB, { CanRefComp, type Handler } from './CompB'
 import type { PropsB } from './type'
 type ComProps = {
   foo: string
@@ -37,12 +37,25 @@ const ChildComp = (
 
 function App() {
   const count = ref(1)
+  const compRef = ref<Handler>()
   return (
     <div>
       <p>this is APP</p>
+      <p
+        onClick={() => {
+          compRef.value?.addCount()
+        }}
+      >
+        click to change canRefComp val
+      </p>
       <ChildComp bar={1} foo="hello" d={() => {}} />
       <hr />
-
+      <CanRefComp
+        header={(count) => `name: ${count}`}
+        name="adsf"
+        ref={compRef}
+      />
+      <hr />
       <CompB
         a="asd"
         footer={(inner) => (

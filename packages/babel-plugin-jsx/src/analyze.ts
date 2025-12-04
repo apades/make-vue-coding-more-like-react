@@ -8,6 +8,7 @@ import {
 } from '@vue/compiler-sfc'
 import { getJsxFnParams } from './ast'
 import type { State } from './interface'
+import { DEFINE_EXPOSE, isCallOf } from './utils'
 
 function getTypeAnnotation(node: BabelCore.types.Node) {
   if (
@@ -38,6 +39,22 @@ function analyzeFnPropsType(
   }
 
   ctx.propsTypeDecl = typeAnnotation
+}
+
+function analyzeFnExpose(
+  path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
+) {
+  const { body } = path.node
+  if (!t.isBlockStatement(body)) return
+
+  for (const i in body.body) {
+    const s = body.body[i]
+    if (!t.isExpressionStatement(s)) continue
+    if (isCallOf(s.expression, DEFINE_EXPOSE)) {
+      body.body.splice(+i, 1)
+      return s.expression.arguments[0]
+    }
+  }
 }
 
 function resolveTypeReference(
@@ -124,6 +141,7 @@ export function analyzeJsxFnComp(
   const rs = {
     props: parseExpression('{}'),
     propsName: 'props' as string,
+    expose: null as ReturnType<typeof parseExpression> | null | undefined,
   } as const
 
   if (!fnProps) return rs
@@ -132,6 +150,7 @@ export function analyzeJsxFnComp(
   }
 
   analyzeFnPropsType(fnProps, ctx)
+  ;(rs as any).expose = analyzeFnExpose(path)
 
   const runtimeProps = extractRuntimeProps(ctx)
   if (!runtimeProps) return rs

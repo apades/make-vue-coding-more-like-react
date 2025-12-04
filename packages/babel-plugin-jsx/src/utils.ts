@@ -1,4 +1,4 @@
-import t from '@babel/types'
+import t, { type CallExpression, type Node } from '@babel/types'
 import { type NodePath } from '@babel/traverse'
 import { isHTMLTag, isSVGTag } from '@vue/shared'
 import type { State } from './interface'
@@ -358,3 +358,20 @@ export const VUE_DFC = 'VUE DFC'
 export function isVueDfc(node: t.Node) {
   return node.leadingComments?.some((comment) => comment.value === VUE_DFC)
 }
+
+export function isCallOf(
+  node: Node | null | undefined,
+  test: string | ((id: string) => boolean) | null | undefined,
+): node is CallExpression {
+  return !!(
+    node &&
+    test &&
+    node.type === 'CallExpression' &&
+    node.callee.type === 'Identifier' &&
+    (typeof test === 'string'
+      ? node.callee.name === test
+      : test(node.callee.name))
+  )
+}
+
+export const DEFINE_EXPOSE = 'defineExpose'
