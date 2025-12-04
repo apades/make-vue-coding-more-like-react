@@ -238,7 +238,10 @@ const plugin: (
   return {
     name: 'transform-vue-define-component',
     pre(file) {
-      const filename = file.opts.filename || 'unknown.js'
+      const filename =
+        (globalThis as any).__VITEST_FILENAME ||
+        file.opts.filename ||
+        'unknown.js'
       helpers = new Set()
       ctx = {
         filename: filename,
@@ -284,8 +287,11 @@ const plugin: (
     visitor: {
       Program: {
         enter(_, state) {
-          const filename = state.file.opts.sourceFileName!
-          updateResolveTypeFs(nodePath.dirname(filename))
+          const filename =
+            state.file.opts.sourceFileName ||
+            (globalThis as any).__VITEST_FILENAME
+
+          if (filename) updateResolveTypeFs(nodePath.dirname(filename))
         },
       },
       FunctionDeclaration: {

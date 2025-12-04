@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import CompB from './CompB'
+import type { PropsB } from './type'
 type ComProps = {
   foo: string
   bar: number
@@ -8,7 +9,7 @@ type ComProps = {
 }
 
 const ChildComp = (
-  unuProps: ComProps,
+  unuProps: ComProps & PropsB,
   // ref: any,
 ) => {
   let com = unuProps.a + unuProps.foo
