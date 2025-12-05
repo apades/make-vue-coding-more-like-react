@@ -81,7 +81,6 @@ const plugin: (
                 'vModelText',
                 'vModelCheckbox',
                 'vModelRadio',
-                'vModelText',
                 'vModelDynamic',
                 'resolveDirective',
                 'mergeProps',

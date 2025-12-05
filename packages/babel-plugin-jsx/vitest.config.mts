@@ -23,8 +23,8 @@ const vitestConfig: ReturnType<typeof defineConfig> = defineConfig({
   ],
   test: {
     globals: true,
-    environment: 'node',
-    // environment: 'jsdom',
+    // environment: 'node',
+    environment: 'jsdom',
   },
 })
 export default vitestConfig
