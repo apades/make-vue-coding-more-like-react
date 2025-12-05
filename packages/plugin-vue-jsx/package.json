@@ -1,6 +1,6 @@
 {
   "name": "@mvcmlr/plugin-vue-jsx",
-  "version": "5.1.2",
+  "version": "0.0.1",
   "type": "module",
   "license": "MIT",
   "author": "Evan You",
@@ -38,10 +38,12 @@
     "@babel/core": "catalog:babel",
     "@babel/plugin-syntax-typescript": "^7.27.1",
     "@babel/plugin-transform-typescript": "^7.28.5",
+    "@babel/traverse": "catalog:babel",
     "@mvcmlr/babel-plugin-jsx": "workspace:*",
     "@rolldown/pluginutils": "^1.0.0-beta.50"
   },
   "devDependencies": {
+    "@types/babel__traverse": "^7.28.0",
     "tsdown": "catalog:tsdown",
     "vite": "catalog:vite"
   },

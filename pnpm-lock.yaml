@@ -292,6 +292,9 @@ importers:
       '@babel/plugin-transform-typescript':
         specifier: ^7.28.5
         version: 7.28.5(@babel/core@7.28.5)
+      '@babel/traverse':
+        specifier: catalog:babel
+        version: 7.28.5
       '@mvcmlr/babel-plugin-jsx':
         specifier: workspace:*
         version: link:../babel-plugin-jsx
@@ -302,6 +305,9 @@ importers:
         specifier: ^3.0.0
         version: 3.5.25(typescript@5.9.3)
     devDependencies:
+      '@types/babel__traverse':
+        specifier: ^7.28.0
+        version: 7.28.0
       tsdown:
         specifier: catalog:tsdown
         version: 0.16.6(synckit@0.11.11)(typescript@5.9.3)

@@ -28,5 +28,5 @@ export interface VueJSXPluginOptions {
    * (**Experimental**) Infer component metadata from types (e.g. `props`, `emits`, `name`)
    * @default false
    */
-  resolveType?: Options | boolean
+  // resolveType?: Options | boolean
 }

@@ -4,14 +4,7 @@ import vueJsx from '@mvcmlr/plugin-vue-jsx'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    vueJsx({
-      // options are passed on to @vue/babel-plugin-jsx
-      // mergeProps: true,
-      // enableObjectSlots: true,
-      resolveType: true,
-    }),
-  ],
+  plugins: [vueJsx()],
   server: {
     watch: {
       ignored: ['!**/node_modules/@mvcmlr/plugin-vue-jsx/**'],

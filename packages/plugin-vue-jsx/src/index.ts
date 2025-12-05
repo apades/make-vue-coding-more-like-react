@@ -1,9 +1,10 @@
 import crypto from 'node:crypto'
 import path from 'node:path'
-import type { types } from '@babel/core'
+import { types } from '@babel/core'
 import * as babel from '@babel/core'
 import jsx from '@mvcmlr/babel-plugin-jsx'
 import { createFilter, normalizePath } from 'vite'
+import { visitors } from '@babel/traverse'
 import type { ComponentOptions } from 'vue'
 import type { Plugin } from 'vite'
 import {
@@ -141,78 +142,116 @@ function vueJsxPlugin(options: Options = {}): Plugin {
         if (filter(id) || filter(filepath)) {
           const plugins = [[jsx, babelPluginOptions], ...babelPlugins]
           if (id.endsWith('.tsx') || filepath.endsWith('.tsx')) {
-            // ts trans 插件
-            plugins.push([
-              // @ts-ignore missing type
-              await import('@babel/plugin-transform-typescript').then(
-                (r) => r.default,
-              ),
-              // @ts-ignore
-              { ...tsPluginOptions, isTSX: true, allowExtensions: true },
-            ])
+            if (tsTransform === 'built-in') {
+              // For 'built-in' add "syntax" plugin
+              // to enable parsing without transformation.
+              plugins.push([
+                // @ts-ignore missing type
+                await import('@babel/plugin-syntax-typescript').then(
+                  (r) => r.default,
+                ),
+                { isTSX: true },
+              ])
+            } else {
+              plugins.push([
+                // @ts-ignore missing type
+                await import('@babel/plugin-transform-typescript').then(
+                  (r) => r.default,
+                ),
+                // @ts-ignore
+                { ...tsPluginOptions, isTSX: true, allExtensions: true },
+              ])
+            }
           }
+          let defineComponentName = optDefineComponentName
 
-          // if (!ssr && !needHmr) {
-          //   plugins.push(() => {
-          //     return {
-          //       visitor: {
-          //         CallExpression: {
-          //           enter(_path: babel.NodePath<types.CallExpression>) {
-          //             if (
-          //               isDefineComponentCall(_path.node, defineComponentName)
-          //             ) {
-          //               const callee = _path.node.callee as types.Identifier
-          //               callee.name = `/* @__PURE__ */ ${callee.name}`
-          //             }
-          //           },
-          //         },
-          //       },
-          //     }
-          //   })
-          // } else {
-          //   // ? 干嘛的走的这里
-          //   plugins.push(() => {
-          //     return {
-          //       visitor: {
-          //         ExportDefaultDeclaration: {
-          //           enter(
-          //             _path: babel.NodePath<types.ExportDefaultDeclaration>,
-          //           ) {
-          //             const unwrappedDeclaration = unwrapTypeAssertion(
-          //               _path.node.declaration,
-          //             )
-          //             if (
-          //               isDefineComponentCall(
-          //                 unwrappedDeclaration,
-          //                 defineComponentName,
-          //               )
-          //             ) {
-          //               const declaration =
-          //                 unwrappedDeclaration as types.CallExpression
-          //               const nodesPath = _path.replaceWithMultiple([
-          //                 // const __default__ = defineComponent(...)
-          //                 types.variableDeclaration('const', [
-          //                   types.variableDeclarator(
-          //                     types.identifier('__default__'),
-          //                     types.callExpression(
-          //                       declaration.callee,
-          //                       declaration.arguments,
-          //                     ),
-          //                   ),
-          //                 ]),
-          //                 // export default __default__
-          //                 types.exportDefaultDeclaration(
-          //                   types.identifier('__default__'),
-          //                 ),
-          //               ])
-          //               _path.scope.registerDeclaration(nodesPath[0])
-          //             }
-          //           },
-          //         },
-          //       },
-          //     }
-          //   })
-          // }
+          // analyze import statements
+          // import { defineComponent as _defineComponent } from 'vue'
+          // will replace 'defineComponent' name to '_defineComponent'
+          const detectImportVisitor: babel.Visitor = {
+            ImportDeclaration(path) {
+              // if (path.node.source.value !== 'vue') return
+
+              path.traverse({
+                ImportSpecifier(path) {
+                  const importedName = (path.node.imported as any).name,
+                    localName = path.node.local.name
+
+                  const findIndex = defineComponentName.findIndex(
+                    (name) => name === importedName,
+                  )
+
+                  defineComponentName[findIndex] = localName
+                },
+              })
+            },
+          }
+          if (!ssr && !needHmr) {
+            plugins.push(() => {
+              return {
+                visitor: visitors.merge([
+                  {
+                    CallExpression: {
+                      enter(_path: babel.NodePath<types.CallExpression>) {
+                        if (
+                          isDefineComponentCall(_path.node, defineComponentName)
+                        ) {
+                          const callee = _path.node.callee as types.Identifier
+                          callee.name = `/* @__PURE__ */ ${callee.name}`
+                        }
+                      },
+                    },
+                  },
+                  detectImportVisitor,
+                ]),
+              }
+            })
+          } else {
+            plugins.push(() => {
+              return {
+                visitor: visitors.merge([
+                  {
+                    ExportDefaultDeclaration: {
+                      enter(
+                        _path: babel.NodePath<types.ExportDefaultDeclaration>,
+                      ) {
+                        const unwrappedDeclaration = unwrapTypeAssertion(
+                          _path.node.declaration,
+                        )
+                        if (
+                          isDefineComponentCall(
+                            unwrappedDeclaration,
+                            defineComponentName,
+                          )
+                        ) {
+                          const declaration =
+                            unwrappedDeclaration as types.CallExpression
+                          const nodesPath = _path.replaceWithMultiple([
+                            // const __default__ = defineComponent(...)
+                            types.variableDeclaration('const', [
+                              types.variableDeclarator(
+                                types.identifier('__default__'),
+                                types.callExpression(
+                                  declaration.callee,
+                                  declaration.arguments,
+                                ),
+                              ),
+                            ]),
+                            // export default __default__
+                            types.exportDefaultDeclaration(
+                              types.identifier('__default__'),
+                            ),
+                          ])
+                          _path.scope.registerDeclaration(nodesPath[0])
+                        }
+                      },
+                    },
+                  },
+                  detectImportVisitor,
+                ]),
+              }
+            })
+          }
 
           const result = babel.transformSync(code, {
             babelrc: false,
@@ -223,13 +262,13 @@ function vueJsxPlugin(options: Options = {}): Plugin {
             configFile: false,
           })!
 
-          // if (!ssr && !needHmr) {
-          //   if (!result.code) return
-          //   return {
-          //     code: result.code,
-          //     map: result.map,
-          //   }
-          // }
+          if (!ssr && !needHmr) {
+            if (!result.code) return
+            return {
+              code: result.code,
+              map: result.map,
+            }
+          }
 
           interface HotComponent {
             local: string
@@ -241,8 +280,6 @@ function vueJsxPlugin(options: Options = {}): Plugin {
           const declaredComponents: string[] = []
           const hotComponents: HotComponent[] = []
 
-          let defineComponentName = optDefineComponentName
-
           for (const node of result.ast!.program.body) {
             if (node.type === 'VariableDeclaration') {
               const names = parseComponentDecls(node, defineComponentName)
@@ -250,22 +287,6 @@ function vueJsxPlugin(options: Options = {}): Plugin {
                 declaredComponents.push(...names)
               }
             }
-
-            // analyze import statements
-            ;(() => {
-              if (node.type !== 'ImportDeclaration') return
-              const source = node.source.value
-              if (source !== 'vue') return
-
-              for (const spec of node.specifiers) {
-                if (spec.type !== 'ImportSpecifier') continue
-                defineComponentName.forEach((name, i) => {
-                  if ((spec.imported as any).name === name) {
-                    defineComponentName[i] = spec.local.name
-                  }
-                })
-              }
-            })()
 
             if (node.type === 'ExportNamedDeclaration') {
               if (
@@ -331,7 +352,6 @@ function vueJsxPlugin(options: Options = {}): Plugin {
             }
           }
 
-          // 热更新的component
           if (hotComponents.length) {
             if (needHmr && !ssr && !/\?vue&type=script/.test(id)) {
               let code = result.code
