@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "type": "module",
   "license": "MIT",
-  "author": "Evan You",
+  "author": "apades, Evan You",
   "description": "Provides Vue 3 JSX & TSX support with HMR.",
   "keywords": [
     "vite",

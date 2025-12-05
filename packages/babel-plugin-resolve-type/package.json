@@ -1,10 +1,9 @@
 {
   "name": "@mvcmlr/babel-plugin-resolve-type",
-  "version": "2.0.1",
+  "version": "0.0.1",
   "description": "Babel plugin for resolving Vue types.",
-  "author": "Kevin Deng <sxzz@sxzz.moe>",
-  "funding": "https://github.com/sponsors/sxzz",
-  "homepage": "https://github.com/vuejs/babel-plugin-jsx/tree/dev/packages/babel-plugin-resolve-type#readme",
+  "author": "apades, Kevin Deng <sxzz@sxzz.moe>",
+  "homepage": "https://github.com/apades/make-vue-coding-more-like-react/tree/main/packages/babel-plugin-resolve-type#readme",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.mjs",
@@ -25,11 +24,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vuejs/babel-plugin-jsx.git",
+    "url": "git+https://github.com/apades/make-vue-coding-more-like-react.git",
     "directory": "packages/babel-plugin-resolve-type"
   },
   "bugs": {
-    "url": "https://github.com/vuejs/babel-plugin-jsx/issues"
+    "url": "https://github.com/apades/make-vue-coding-more-like-react/issues"
   },
   "files": [
     "dist"

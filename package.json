@@ -9,7 +9,11 @@
   "scripts": {
     "dev": "pnpm run \"/^dev:.*/\"",
     "dev:babel-jsx": "tsdown --watch --sourcemap",
-    "dev:babel-jsx-plugin": "pnpm --filter @mvcmlr/plugin-vue-jsx run dev --sourcemap"
+    "dev:babel-jsx-plugin": "pnpm --filter @mvcmlr/plugin-vue-jsx run dev --sourcemap",
+    "build": "pnpm run \"/^build:.*/\"",
+    "build:babel-jsx": "tsdown --build",
+    "build:babel-jsx-plugin": "pnpm --filter @mvcmlr/plugin-vue-jsx run build",
+    "publish:core": "pnpm --filter @mvcmlr/babel-helper-vue-transform-on --filter @mvcmlr/babel-plugin-jsx --filter @mvcmlr/plugin-vue-jsx publish --filter @mvcmlr/babel-plugin-resolve-type --access=public"
   },
   "license": "MIT",
   "packageManager": "pnpm@10.11.0",

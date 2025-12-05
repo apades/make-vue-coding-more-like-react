@@ -1,6 +1,6 @@
 {
   "name": "@mvcmlr/babel-helper-vue-transform-on",
-  "version": "2.0.1",
+  "version": "0.0.1",
   "type": "module",
   "description": "to help transform on",
   "author": "Amour1688 <lcz_1996@foxmail.com>",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vuejs/babel-plugin-jsx.git",
+    "url": "git+https://github.com/apades/make-vue-coding-more-like-react.git",
     "directory": "packages/babel-helper-vue-transform-on"
   }
 }
