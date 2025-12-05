@@ -169,27 +169,22 @@ function vueJsxPlugin(options: Options = {}): Plugin {
           // import { defineComponent as _defineComponent } from 'vue'
           // will replace 'defineComponent' name to '_defineComponent'
           const detectImportVisitor: babel.Visitor = {
-            ImportDeclaration(path) {
-              // if (path.node.source.value !== 'vue') return
+            ImportSpecifier(path) {
+              const importedName = (path.node.imported as any).name,
+                localName = path.node.local.name
 
-              path.traverse({
-                ImportSpecifier(path) {
-                  const importedName = (path.node.imported as any).name,
-                    localName = path.node.local.name
+              const findIndex = defineComponentName.findIndex(
+                (name) => name === importedName,
+              )
 
-                  const findIndex = defineComponentName.findIndex(
-                    (name) => name === importedName,
-                  )
-
-                  defineComponentName[findIndex] = localName
-                },
-              })
+              defineComponentName[findIndex] = localName
             },
           }
           if (!ssr && !needHmr) {
             plugins.push(() => {
               return {
                 visitor: visitors.merge([
+                  detectImportVisitor,
                   {
                     CallExpression: {
                       enter(_path: babel.NodePath<types.CallExpression>) {
@@ -202,7 +197,6 @@ function vueJsxPlugin(options: Options = {}): Plugin {
                       },
                     },
                   },
-                  detectImportVisitor,
                 ]),
               }
             })
@@ -210,6 +204,7 @@ function vueJsxPlugin(options: Options = {}): Plugin {
             plugins.push(() => {
               return {
                 visitor: visitors.merge([
+                  detectImportVisitor,
                   {
                     ExportDefaultDeclaration: {
                       enter(
@@ -247,7 +242,6 @@ function vueJsxPlugin(options: Options = {}): Plugin {
                       },
                     },
                   },
-                  detectImportVisitor,
                 ]),
               }
             })
@@ -281,6 +275,21 @@ function vueJsxPlugin(options: Options = {}): Plugin {
           const hotComponents: HotComponent[] = []
 
           for (const node of result.ast!.program.body) {
+            // analyze import statements
+            ;(() => {
+              if (node.type !== 'ImportDeclaration') return
+              const source = node.source.value
+
+              for (const spec of node.specifiers) {
+                if (spec.type !== 'ImportSpecifier') continue
+                defineComponentName.forEach((name, i) => {
+                  if ((spec.imported as any).name === name) {
+                    defineComponentName[i] = spec.local.name
+                  }
+                })
+              }
+            })()
+
             if (node.type === 'VariableDeclaration') {
               const names = parseComponentDecls(node, defineComponentName)
               if (names.length) {
