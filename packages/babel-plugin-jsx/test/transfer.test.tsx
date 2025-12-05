@@ -36,46 +36,57 @@ const transpile = (source: string, options: VueJSXPluginOptions = {}) =>
     )
   })
 
-async function getComponent(code: string, name = 'App') {
-  const vueImportNames = [
-    'createVNode',
-    'Fragment',
-    'resolveComponent',
-    'withDirectives',
-    'vShow',
-    'vModelSelect',
-    'vModelCheckbox',
-    'vModelRadio',
-    'vModelText',
-    'vModelDynamic',
-    'resolveDirective',
-    'mergeProps',
-    'createTextVNode',
-    'defineComponent',
-    'isVNode',
-  ] as const
+const vueImportNames = [
+  'createVNode',
+  'Fragment',
+  'resolveComponent',
+  'withDirectives',
+  'vShow',
+  'vModelSelect',
+  'vModelCheckbox',
+  'vModelRadio',
+  'vModelText',
+  'vModelDynamic',
+  'resolveDirective',
+  'mergeProps',
+  'createTextVNode',
+  'defineComponent',
+  'isVNode',
+] as const
 
-  let transformed = await transpile(code)
+async function transpileCodeToLocalFnCode(
+  code: string,
+  opt?: VueJSXPluginOptions,
+) {
+  let transformed = await transpile(code, opt)
   transformed = transformed.replaceAll(/import.*from.*/g, '')
   vueImportNames.forEach((name) => {
     transformed = transformed.replaceAll(`_${name}`, name)
   })
   transformed = transformed.replaceAll(/\bexport .*/g, '')
 
-  const fnCode = `
-      return ((${vueImportNames.join(', ')})=>{
-      ${transformed}
+  return transformed
+}
+async function transpiledFnCodeToVueComponent(fnCode: string, name = 'App') {
+  const fnCodeFactory = `
+  return ((${vueImportNames.join(', ')})=>{
+      ${fnCode}
       return ${name}
     })(...arguments)
-    `
-
-  return new Function(fnCode)(
+  `
+  return new Function(fnCodeFactory)(
     ...vueImportNames.map(
       (name) =>
         // eslint-disable-next-line import/namespace
         vue[name],
     ),
   )
+}
+
+async function transpileCodeToVueComponent(code: string, name = 'App') {
+  const fnCode = await transpileCodeToLocalFnCode(code)
+
+  return transpiledFnCodeToVueComponent(fnCode, name)
 }
 describe('jsx fn component define', () => {
   it('function', async () => {
@@ -84,7 +95,7 @@ describe('jsx fn component define', () => {
       return <div>hello</div>
     }
     `
-    const wrapper = shallowMount(await getComponent(code))
+    const wrapper = shallowMount(await transpileCodeToVueComponent(code))
     expect(wrapper.text()).toBe('hello')
   })
 
@@ -94,8 +105,29 @@ describe('jsx fn component define', () => {
       return <div>hello</div>
     }
     `
-    const wrapper = shallowMount(await getComponent(code))
+    const wrapper = shallowMount(await transpileCodeToVueComponent(code))
     expect(wrapper.text()).toBe('hello')
+  })
+
+  it('Not jsx defineComponent without return jsxElement', async () => {
+    const code = `
+    type Props = {
+      a: number
+    }
+    const App = (props: Props) => {
+      return 'hello' + props.a
+    }
+    `
+    const fnCode = await transpileCodeToLocalFnCode(code)
+    expect(fnCode).not.includes('defineComponent')
+
+    const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode), {
+      props: {
+        a: 1,
+      },
+    })
+    expect(Object.keys(wrapper.props())).toEqual([])
+    expect(wrapper.text()).toBe('hello1')
   })
 })
 
@@ -106,7 +138,7 @@ describe('jsx props define', () => {
       return <div>hello {props.a}</div>
     }
     `
-    const wrapper = shallowMount(await getComponent(code), {
+    const wrapper = shallowMount(await transpileCodeToVueComponent(code), {
       props: {
         a: 1,
       },
@@ -123,7 +155,7 @@ describe('jsx props define', () => {
       return <div>hello</div>
     }
     `
-    const wrapper = shallowMount(await getComponent(code), {
+    const wrapper = shallowMount(await transpileCodeToVueComponent(code), {
       props: {
         a: 1,
       },
@@ -145,7 +177,7 @@ describe('jsx props define', () => {
         return <div>hello {props.a}</div>
       }
       `
-      const wrapper = shallowMount(await getComponent(code), {
+      const wrapper = shallowMount(await transpileCodeToVueComponent(code), {
         props: {
           a: 1,
         },
@@ -166,7 +198,7 @@ describe('jsx props define', () => {
         return <div>hello {props.a}</div>
       }
       `
-      const wrapper = shallowMount(await getComponent(code), {
+      const wrapper = shallowMount(await transpileCodeToVueComponent(code), {
         props: {
           a: 1,
         },
@@ -188,7 +220,7 @@ describe('jsx props define', () => {
         return <div>hello {props.a}</div>
       }
       `
-      const wrapper = shallowMount(await getComponent(code), {
+      const wrapper = shallowMount(await transpileCodeToVueComponent(code), {
         props: {
           a: 1,
         },
@@ -209,7 +241,7 @@ describe('jsx props define', () => {
         return <div>hello {props.a}</div>
       }
       `
-      const wrapper = shallowMount(await getComponent(code), {
+      const wrapper = shallowMount(await transpileCodeToVueComponent(code), {
         props: {
           a: 1,
         },
@@ -229,7 +261,7 @@ describe('jsx props define', () => {
       return <div>hello {props.a} {props.b}</div>
     }
     `
-    const wrapper = shallowMount(await getComponent(code), {
+    const wrapper = shallowMount(await transpileCodeToVueComponent(code), {
       props: {
         a: 'str',
         b: 2,
