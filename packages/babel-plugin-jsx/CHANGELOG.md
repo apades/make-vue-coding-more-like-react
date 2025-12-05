@@ -1,4 +1,4 @@
-# @mvcmlr/plugin-vue-jsx
+# @mvcmlr/babel-plugin-jsx
 
 ## 0.0.1
 
