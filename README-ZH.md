@@ -45,6 +45,35 @@ const Child = defineComponent<Props>({
 该项目就是为了解决上面的啰嗦写法，转向React只用一个函数定义jsx component的写法，具体[example](#Example)
 </details>
 
+## How to use
+> [!WARNING]
+> 该插件目前只支持:
+> Vue3 + Typescript + setup
+
+```bash
+npm i @mvcmlr/plugin-vue-jsx -D
+```
+
+vite.mts
+```ts
+import { defineConfig } from 'vite'
+import vueJsx from '@mvcmlr/plugin-vue-jsx'
+
+export default defineConfig({
+  plugins: [vueJsx()],
+})
+```
+
+tsconfig.json
+```jsonc
+{
+  "compilerOptions": {
+    // ...
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+  }
+}
+```
 
 ## Example
 

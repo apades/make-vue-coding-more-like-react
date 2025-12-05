@@ -45,6 +45,35 @@ const Child = defineComponent<Props>({
 This project is to solve the above verbose writing method and turn to React to use only one function to define jsx component writing method, [example](#Example)
 </details>
 
+## How to use
+> [!WARNING]
+> THIS PLUGIN ONLY SUPPORT WITH
+> Vue3 + Typescript + setup
+
+```bash
+npm i @mvcmlr/plugin-vue-jsx -D
+```
+
+vite.mts
+```ts
+import { defineConfig } from 'vite'
+import vueJsx from '@mvcmlr/plugin-vue-jsx'
+
+export default defineConfig({
+  plugins: [vueJsx()],
+})
+```333333
+
+tsconfig.json
+```jsonc
+{
+  "compilerOptions": {
+    // ...
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+  }
+}
+```
 
 ## Example
 
