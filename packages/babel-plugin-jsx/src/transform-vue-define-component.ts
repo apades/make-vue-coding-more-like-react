@@ -344,6 +344,17 @@ const plugin: (
       },
       FunctionDeclaration: {
         enter(path, state) {
+          // Disable deeper defineComponent
+          if (
+            path.findParent(
+              (p) =>
+                t.isCallExpression(p.node) &&
+                (p.node.callee as t.Identifier)?.name ===
+                  state.get('defineComponent')()?.name,
+            )
+          )
+            return
+
           const returnStatements = getJsxFnAllReturnStatements(path)
           if (!returnStatements) return
           const filename = state.file.opts.sourceFileName
@@ -358,6 +369,16 @@ const plugin: (
       },
       ArrowFunctionExpression: {
         enter(path, state) {
+          // Disable deeper defineComponent
+          if (
+            path.findParent(
+              (p) =>
+                t.isCallExpression(p.node) &&
+                (p.node.callee as t.Identifier)?.name ===
+                  state.get('defineComponent')()?.name,
+            )
+          )
+            return
           // √ () => {}
           // × /* VUE DFC */() => {}
           if (isVueDfc(path.node)) return
@@ -374,6 +395,7 @@ const plugin: (
             fnName,
             ...analysisData,
           })
+          path.skipKey('ArrowFunctionExpression')
         },
       },
     },

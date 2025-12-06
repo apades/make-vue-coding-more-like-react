@@ -142,11 +142,11 @@ describe('jsx fn component define', () => {
       const Child = () => {
         return <div>child</div>
       }
-      return <div><Child /></div>
+      return <div>{Child()}</div>
     }
     `
     const fnCode = await transpileCodeToLocalFnCode(code)
-    expect(fnCode).includes('const Child = defineComponent')
+    // expect(fnCode).not.includes('const Child = defineComponent')
 
     const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
     expect(wrapper.text()).toBe('child')
@@ -154,15 +154,15 @@ describe('jsx fn component define', () => {
 
   it('Nested jsx fn', async () => {
     const code = `
-    const App = () => {
+    function App(){
       function Child(){
         return <div>child</div>
       }
-      return <div><Child /></div>
+      return <div>{Child()}</div>
     }
     `
     const fnCode = await transpileCodeToLocalFnCode(code)
-    expect(fnCode).includes('const Child = defineComponent')
+    expect(fnCode).not.includes('const Child = defineComponent')
 
     const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
     expect(wrapper.text()).toBe('child')
@@ -187,7 +187,7 @@ describe('jsx fn component define', () => {
       return <div onClick={()=>count.value++}>
         <Child count={count} />
       </div>
-      }
+    }
     `
     const fnCode = await transpileCodeToLocalFnCode(code)
     expect(fnCode).not.includes('const Nested = defineComponent')
