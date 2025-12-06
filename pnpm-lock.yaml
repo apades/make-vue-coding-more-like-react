@@ -139,9 +139,6 @@ importers:
       '@mvcmlr/babel-helper-vue-transform-on':
         specifier: workspace:*
         version: link:../babel-helper-vue-transform-on
-      '@mvcmlr/babel-plugin-resolve-type':
-        specifier: workspace:*
-        version: link:../babel-plugin-resolve-type
       '@vue/compiler-sfc':
         specifier: ^3.5.25
         version: 3.5.25
