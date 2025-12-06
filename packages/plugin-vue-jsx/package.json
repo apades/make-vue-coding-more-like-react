@@ -1,6 +1,6 @@
 {
   "name": "@mvcmlr/plugin-vue-jsx",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "license": "MIT",
   "author": "apades, Evan You",
