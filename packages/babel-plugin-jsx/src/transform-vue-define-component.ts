@@ -5,7 +5,7 @@ import type * as BabelCore from '@babel/core'
 import { addNamed } from '@babel/helper-module-imports'
 import { declare } from '@babel/helper-plugin-utils'
 import { type NodePath } from '@babel/traverse'
-import t from '@babel/types'
+import t, { isBlockStatement } from '@babel/types'
 import {
   type SimpleTypeResolveContext,
   type SimpleTypeResolveOptions,
@@ -18,7 +18,7 @@ export function buildJsxFnComponentToVueDefineComponent(
   path: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
   state: State,
   params: {
-    returnStatement: NodePath<t.ReturnStatement>
+    returnStatements: ReturnType<typeof getJsxFnAllReturnStatements>
     fnName: string
   } & ReturnType<typeof analyzeJsxFnComp>,
 ) {
@@ -26,15 +26,14 @@ export function buildJsxFnComponentToVueDefineComponent(
   const bodyStatements = t.isArrowFunctionExpression(path.node)
     ? (path.get('body') as NodePath<t.BlockStatement>).node.body
     : path.node.body.body
+
   const bodyWithoutReturn = bodyStatements.filter(
-    (node) => !t.isReturnStatement(node),
+    (node) => !params.returnStatements?.has(node),
   )
 
   const fnName = params.fnName
 
   const jsxProps = params.props
-
-  const returnStatement = params.returnStatement.node
 
   const JSX_COMP_NAME = '__JSX'
   const JSX_COMP_SLOT_NAME = '__SLOT'
@@ -53,7 +52,7 @@ export function buildJsxFnComponentToVueDefineComponent(
 
   const innerJsxArrowFn = t.arrowFunctionExpression(
     [],
-    t.blockStatement([returnStatement]),
+    t.blockStatement([...params.returnStatements!.values()]),
   )
   innerJsxArrowFn.leadingComments = [
     {
@@ -178,26 +177,86 @@ export function buildJsxFnComponentToVueDefineComponent(
   path.replaceWith(jsxCompFnWrapper)
 }
 
-const isReturnJsxElementAndGetReturnStatement = (
-  parentPath: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
+const getJsxFnAllReturnStatements = (
+  fnPath: NodePath<t.FunctionDeclaration | t.ArrowFunctionExpression>,
 ) => {
   let isJsxFn = false
-  let returnStatement: NodePath<t.ReturnStatement> | undefined
-  parentPath.traverse({
-    ReturnStatement(returnPath) {
-      // skip ts error
-      returnPath.traverse({
-        JSXElement(jsxPath) {
-          isJsxFn = true
-          returnStatement = returnPath
-          jsxPath.stop()
-          returnPath.stop()
-        },
-      })
+  const returnStatementSet = new Set<t.Statement>()
+  fnPath.traverse({
+    ArrowFunctionExpression(p) {
+      p.skip()
     },
+    FunctionExpression(p) {
+      p.skip()
+    },
+    ReturnStatement(rPath) {
+      if (!isJsxFn) {
+        rPath.traverse({
+          JSXElement(jsxPath) {
+            isJsxFn = true
+            jsxPath.stop()
+          },
+        })
+      }
+
+      let realStatement: t.Statement | undefined
+      const fnBlockStatement = fnPath.node.body
+      rPath.findParent((p) => {
+        if (p.node === fnBlockStatement) {
+          realStatement = rPath.node
+          return true
+        }
+
+        if (p.parent !== fnBlockStatement) return false
+        if (t.isStatement(p.node)) {
+          realStatement = p.node
+          return true
+        }
+        return false
+      })
+
+      realStatement && returnStatementSet.add(realStatement)
+    },
+    // Statement(sPath) {
+    //   // {
+    //   //    if(val) return a
+    //   //    return b
+    //   // }  ^^^^^^^^
+    //   if (sPath.parent === fnPath.node && isBlockStatement(sPath.node)) {
+    //     const hasSimpleReturn = sPath.node.body.find((n) =>
+    //       t.isReturnStatement(n),
+    //     )
+    //     if (hasSimpleReturn) {
+    //       returnStatementSet.add(hasSimpleReturn)
+    //     }
+    //     return
+    //   }
+    //   // {
+    //   //    if(val) return a // maybe more deeper Statement
+    //   //    ^^^^^^^^^^^^^^^^
+    //   //    return b
+    //   // }
+    //   sPath.traverse({
+    //     ReturnStatement(returnPath) {
+    //       if (!isJsxFn) {
+    //         returnPath.traverse({
+    //           JSXElement(jsxPath) {
+    //             isJsxFn = true
+    //             jsxPath.stop()
+    //           },
+    //         })
+    //       }
+
+    //       returnStatementSet.add(sPath.node)
+    //       console.log('sPath', sPath)
+
+    //       sPath.skip()
+    //     },
+    //   })
+    // },
   })
 
-  return isJsxFn ? returnStatement : undefined
+  return isJsxFn ? returnStatementSet : null
 }
 
 const plugin: (
@@ -285,13 +344,13 @@ const plugin: (
       },
       FunctionDeclaration: {
         enter(path, state) {
-          const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
-          if (!returnStatement) return
+          const returnStatements = getJsxFnAllReturnStatements(path)
+          if (!returnStatements) return
           const filename = state.file.opts.sourceFileName
           const fnName = path.node.id?.name || ''
           const analysisData = analyzeJsxFnComp(path, ctx!)
           buildJsxFnComponentToVueDefineComponent(path, state, {
-            returnStatement,
+            returnStatements,
             fnName,
             ...analysisData,
           })
@@ -305,13 +364,13 @@ const plugin: (
           // √ const A = () => <div></div>
           // × () => <div></div>
           if (!t.isVariableDeclarator(path.parent)) return
-          const returnStatement = isReturnJsxElementAndGetReturnStatement(path)
-          if (!returnStatement) return
+          const returnStatements = getJsxFnAllReturnStatements(path)
+          if (!returnStatements) return
           const filename = state.file.opts.sourceFileName
           const fnName = (path.parent.id as t.Identifier).name || ''
           const analysisData = analyzeJsxFnComp(path, ctx!)
           buildJsxFnComponentToVueDefineComponent(path, state, {
-            returnStatement,
+            returnStatements,
             fnName,
             ...analysisData,
           })

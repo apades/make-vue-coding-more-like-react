@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { transform } from '@babel/core'
-import { shallowMount } from '@vue/test-utils'
+import { mount, shallowMount } from '@vue/test-utils'
 import * as vue from 'vue'
 import JSX, { type VueJSXPluginOptions } from '../src'
 // import path from 'node:path'
@@ -52,6 +52,7 @@ const vueImportNames = [
   'createTextVNode',
   'defineComponent',
   'isVNode',
+  'ref',
 ] as const
 
 async function transpileCodeToLocalFnCode(
@@ -167,16 +168,41 @@ describe('jsx fn component define', () => {
     expect(wrapper.text()).toBe('child')
   })
 
-  it('Nested jsx fn with props', async () => {
+  it('Multi return jsx fn', async () => {
     const code = `
-    const App = () => {
-      function Child(props: {a: number}){
-        return <div>child {props.a}</div>
+    const Child = (props: { count: Ref<number,number> }) => {
+      const count = props.count
+      const Nested = () => <div>count2</div>
+      if(!count.value)
+        return <div>count0</div>
+      if(count.value > 1){
+        if(count.value == 2) return Nested()
+        if(count.value == 3) return "count3"
       }
-      return <div><Child a={1} /></div>
+      return <div>count4</div>
     }
+
+    const App = () => {
+      const count = ref(0)
+      return <div onClick={()=>count.value++}>
+        <Child count={count} />
+      </div>
+      }
     `
-    const wrapper = shallowMount(await transpileCodeToVueComponent(code))
+    const fnCode = await transpileCodeToLocalFnCode(code)
+    expect(fnCode).not.includes('const Nested = defineComponent')
+    const wrapper = mount(await transpiledFnCodeToVueComponent(fnCode))
+    expect(wrapper.text()).toBe('count0')
+    await wrapper.trigger('click')
+    expect(wrapper.text()).toBe('count4')
+    await wrapper.trigger('click')
+    expect(wrapper.text()).toBe('count2')
+    await wrapper.trigger('click')
+    expect(wrapper.text()).toBe('count3')
+    await wrapper.trigger('click')
+    expect(wrapper.text()).toBe('count4')
+    await wrapper.trigger('click')
+    expect(wrapper.text()).toBe('count4')
   })
 })
 
