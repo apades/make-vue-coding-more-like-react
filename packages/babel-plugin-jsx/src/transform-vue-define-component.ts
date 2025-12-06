@@ -350,7 +350,7 @@ const plugin: (
               (p) =>
                 t.isCallExpression(p.node) &&
                 (p.node.callee as t.Identifier)?.name ===
-                  state.get('defineComponent')()?.name,
+                  state.get('defineComponent')?.()?.name,
             )
           )
             return
@@ -375,7 +375,7 @@ const plugin: (
               (p) =>
                 t.isCallExpression(p.node) &&
                 (p.node.callee as t.Identifier)?.name ===
-                  state.get('defineComponent')()?.name,
+                  state.get('defineComponent')?.()?.name,
             )
           )
             return

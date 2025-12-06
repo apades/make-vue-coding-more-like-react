@@ -150,6 +150,55 @@ function App() {
 export default App
 ```
 
+## Syntax warning
+
+- Define jsx function
+
+```tsx
+// ✔ return jsx element
+const App = () => <div></div>
+// ✔
+function App() {
+  return <div></div>
+}
+// 🚫 without return jsx element
+const App = () => '1111'
+// 🚫 reference jsx variable
+const Child = <div></div>
+const App = () => Child
+```
+
+- Nested jsx function
+
+```tsx
+const App = () => {
+  const Child = (props: { a: number }) => {
+    // 🚫 🤔 Not support yet, maybe in the future
+    defineExpose({})
+    return <div>{props.a}</div>
+  }
+
+  // 🚫 🤔 Not support yet, maybe in the future
+  return <Child a={1} />
+  // ✔
+  return Child({ a: 1 })
+}
+```
+
+- Multiple return
+
+```tsx
+const App = (props: { a: number }) => {
+  // ✔ use hook before return
+  const count1 = ref(0)
+  if (props.a == 1) return <div>1</div>
+  // 🚫 don't use hook after return
+  const count2 = ref(0)
+  if (props.a == 2) return <div>2</div>
+  return <div>3</div>
+}
+```
+
 ## Credit
 
 Code based on:

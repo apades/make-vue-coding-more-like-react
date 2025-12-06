@@ -139,33 +139,33 @@ describe('jsx fn component define', () => {
   it('Nested jsx arrow fn', async () => {
     const code = `
     const App = () => {
-      const Child = () => {
-        return <div>child</div>
+      const Child = (props: {a:number}) => {
+        return <div>child {props.a}</div>
       }
-      return <div>{Child()}</div>
-    }
-    `
-    const fnCode = await transpileCodeToLocalFnCode(code)
-    // expect(fnCode).not.includes('const Child = defineComponent')
-
-    const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
-    expect(wrapper.text()).toBe('child')
-  })
-
-  it('Nested jsx fn', async () => {
-    const code = `
-    function App(){
-      function Child(){
-        return <div>child</div>
-      }
-      return <div>{Child()}</div>
+      return <div>{Child({a:1})}</div>
     }
     `
     const fnCode = await transpileCodeToLocalFnCode(code)
     expect(fnCode).not.includes('const Child = defineComponent')
 
     const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
-    expect(wrapper.text()).toBe('child')
+    expect(wrapper.text()).toBe('child 1')
+  })
+
+  it('Nested jsx fn', async () => {
+    const code = `
+    function App(){
+      function Child(props: {a:number}){
+        return <div>child {props.a}</div>
+      }
+      return <div>{Child({a:1})}</div>
+    }
+    `
+    const fnCode = await transpileCodeToLocalFnCode(code)
+    expect(fnCode).not.includes('const Child = defineComponent')
+
+    const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
+    expect(wrapper.text()).toBe('child 1')
   })
 
   it('Multi return jsx fn', async () => {
