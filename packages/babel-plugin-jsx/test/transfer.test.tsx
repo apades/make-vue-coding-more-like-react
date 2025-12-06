@@ -95,7 +95,9 @@ describe('jsx fn component define', () => {
       return <div>hello</div>
     }
     `
-    const wrapper = shallowMount(await transpileCodeToVueComponent(code))
+    const fnCode = await transpileCodeToLocalFnCode(code)
+    expect(fnCode).includes('defineComponent')
+    const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
     expect(wrapper.text()).toBe('hello')
   })
 
@@ -105,7 +107,10 @@ describe('jsx fn component define', () => {
       return <div>hello</div>
     }
     `
-    const wrapper = shallowMount(await transpileCodeToVueComponent(code))
+    const fnCode = await transpileCodeToLocalFnCode(code)
+    expect(fnCode).includes('defineComponent')
+
+    const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
     expect(wrapper.text()).toBe('hello')
   })
 
@@ -128,6 +133,50 @@ describe('jsx fn component define', () => {
     })
     expect(Object.keys(wrapper.props())).toEqual([])
     expect(wrapper.text()).toBe('hello1')
+  })
+
+  it('Nested jsx arrow fn', async () => {
+    const code = `
+    const App = () => {
+      const Child = () => {
+        return <div>child</div>
+      }
+      return <div><Child /></div>
+    }
+    `
+    const fnCode = await transpileCodeToLocalFnCode(code)
+    expect(fnCode).includes('const Child = defineComponent')
+
+    const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
+    expect(wrapper.text()).toBe('child')
+  })
+
+  it('Nested jsx fn', async () => {
+    const code = `
+    const App = () => {
+      function Child(){
+        return <div>child</div>
+      }
+      return <div><Child /></div>
+    }
+    `
+    const fnCode = await transpileCodeToLocalFnCode(code)
+    expect(fnCode).includes('const Child = defineComponent')
+
+    const wrapper = shallowMount(await transpiledFnCodeToVueComponent(fnCode))
+    expect(wrapper.text()).toBe('child')
+  })
+
+  it('Nested jsx fn with props', async () => {
+    const code = `
+    const App = () => {
+      function Child(props: {a: number}){
+        return <div>child {props.a}</div>
+      }
+      return <div><Child a={1} /></div>
+    }
+    `
+    const wrapper = shallowMount(await transpileCodeToVueComponent(code))
   })
 })
 
@@ -152,7 +201,7 @@ describe('jsx props define', () => {
       a: number
     }
     function App(props: Props) {
-      return <div>hello</div>
+      return <div>hello {props.a}</div>
     }
     `
     const wrapper = shallowMount(await transpileCodeToVueComponent(code), {

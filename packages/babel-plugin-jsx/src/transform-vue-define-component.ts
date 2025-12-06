@@ -115,62 +115,44 @@ export function buildJsxFnComponentToVueDefineComponent(
     ),
   ])
 
-  const innerJsxCompFnWrapper = t.variableDeclaration('const', [
-    t.variableDeclarator(
-      t.identifier(fnName),
-      // TODO defineComponent
-      t.callExpression(createIdentifier(state, 'defineComponent'), [
-        t.objectExpression([
-          t.objectProperty(t.identifier('name'), t.stringLiteral(fnName)),
-          t.objectProperty(t.identifier('props'), jsxProps),
-          // t.objectProperty(
-          //   t.identifier('slots'),
-          //   t.identifier(JSX_COMP_SLOT_NAME),
-          // ),
-          t.objectMethod(
-            'method',
-            t.identifier('setup'),
-            [
-              t.identifier(JSX_COMP_PROPS_NAME),
-              t.identifier(JSX_COMP_CTX_NAME),
-            ],
-            t.blockStatement([
-              ...(params.expose
-                ? [
-                    // t.variableDeclaration('const', [
-                    //   t.variableDeclarator(
-                    //     t.identifier(DEFINE_EXPOSE),
-                    //     t.memberExpression(
-                    //       t.identifier(JSX_COMP_CTX_NAME),
-                    //       t.identifier('expose'),
-                    //     ),
-                    //   ),
-                    // ]),
-                    t.expressionStatement(
-                      t.callExpression(
-                        t.memberExpression(
-                          t.identifier(JSX_COMP_CTX_NAME),
-                          t.identifier('expose'),
-                        ),
-                        [params.expose],
+  const defineComponentExpr = t.callExpression(
+    createIdentifier(state, 'defineComponent'),
+    [
+      t.objectExpression([
+        t.objectProperty(t.identifier('name'), t.stringLiteral(fnName)),
+        t.objectProperty(t.identifier('props'), jsxProps),
+        t.objectMethod(
+          'method',
+          t.identifier('setup'),
+          [t.identifier(JSX_COMP_PROPS_NAME), t.identifier(JSX_COMP_CTX_NAME)],
+          t.blockStatement([
+            ...(params.expose
+              ? [
+                  t.expressionStatement(
+                    t.callExpression(
+                      t.memberExpression(
+                        t.identifier(JSX_COMP_CTX_NAME),
+                        t.identifier('expose'),
                       ),
+                      [params.expose],
                     ),
-                  ]
-                : []),
-              propsProxyStatement,
-              ...bodyWithoutReturn,
-              t.returnStatement(innerJsxArrowFn),
-            ]),
-          ),
-          // t.functionDeclaration(
-          //   t.identifier('setup'),
-          //   [],
-          //   t.blockStatement([]),
-          // ),
-        ]),
+                  ),
+                ]
+              : []),
+            propsProxyStatement,
+            ...bodyWithoutReturn,
+            t.returnStatement(innerJsxArrowFn),
+          ]),
+        ),
       ]),
-    ),
-  ])
+    ],
+  )
+
+  const jsxCompFnWrapper = isArrowFn
+    ? defineComponentExpr
+    : t.variableDeclaration('const', [
+        t.variableDeclarator(t.identifier(fnName), defineComponentExpr),
+      ])
 
   // const factoryArrowFn = t.arrowFunctionExpression(
   //   [],
@@ -193,11 +175,7 @@ export function buildJsxFnComponentToVueDefineComponent(
   //   ),
   // ])
 
-  if (isArrowFn) {
-    path.getStatementParent()?.replaceWith(innerJsxCompFnWrapper)
-  } else {
-    path.replaceWith(innerJsxCompFnWrapper)
-  }
+  path.replaceWith(jsxCompFnWrapper)
 }
 
 const isReturnJsxElementAndGetReturnStatement = (
