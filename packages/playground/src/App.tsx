@@ -1,6 +1,17 @@
-import { ref } from 'vue'
+import { effect, ref } from 'vue'
+import {
+  ElButton,
+  ElMention,
+  ElRadio,
+  ElTransfer,
+  TransferInstance,
+  ElUpload,
+} from 'element-plus'
 import CompB, { CanRefComp, type Handler } from './CompB'
 import type { PropsB } from './type'
+import 'element-plus/dist/index.css'
+import { NAutoComplete } from 'naive-ui'
+
 type ComProps = {
   foo: string
   bar: number
@@ -14,6 +25,26 @@ const ChildComp = (
 ) => {
   let com = unuProps.a + unuProps.foo
   const val = ref(0)
+  const mention = ref('')
+  const options = ref([
+    {
+      label: 'Fuphoenixes',
+      value: 'Fuphoenixes',
+    },
+    {
+      label: 'kooriookami',
+      value: 'kooriookami',
+    },
+    {
+      label: 'Jeremy',
+      value: 'Jeremy',
+    },
+    {
+      label: 'btea',
+      value: 'btea',
+    },
+  ])
+  const nVal = ref('')
 
   if (unuProps.a) {
     return null
@@ -24,6 +55,26 @@ const ChildComp = (
       <div>AnotherComp</div>
       <p>foo:{unuProps.foo}</p>
       <p>bar:{unuProps.bar}</p>
+
+      <NAutoComplete
+        v-model={nVal.value}
+        options={options.value}
+      ></NAutoComplete>
+
+      <ElMention
+        v-model={mention.value}
+        v-slots={
+          {
+            header: () => <div>header</div>,
+          } as any
+        }
+        options={options.value}
+        onSearch={(v) => {
+          // console.log('onSearch s', v)
+        }}
+      ></ElMention>
+      {/* <ElTransfer renderContent={} v-slots={{}}></ElTransfer> */}
+      {/* <ElUpload withCredentials accept="asd"></ElUpload> */}
       <p
         onClick={() => {
           val.value++

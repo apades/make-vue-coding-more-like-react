@@ -10,4 +10,9 @@ export default defineConfig({
       ignored: ['!**/node_modules/@mvcmlr/plugin-vue-jsx/**'],
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: { api: 'modern-compiler' },
+    },
+  },
 })
