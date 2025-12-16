@@ -21,6 +21,9 @@ catalogs:
     '@babel/plugin-syntax-jsx':
       specifier: ^7.27.1
       version: 7.27.1
+    '@babel/plugin-syntax-typescript':
+      specifier: ^7.27.1
+      version: 7.27.1
     '@babel/preset-env':
       specifier: ^7.28.3
       version: 7.28.5
@@ -33,15 +36,31 @@ catalogs:
     '@babel/types':
       specifier: ^7.28.5
       version: 7.28.5
+    '@types/babel__template':
+      specifier: ^7.4.4
+      version: 7.4.4
+    '@types/babel__traverse':
+      specifier: ^7.28.0
+      version: 7.28.0
   tsdown:
     tsdown:
       specifier: ^0.16.6
       version: 0.16.6
+  utils:
+    tsx:
+      specifier: ^4.20.6
+      version: 4.20.6
   vite:
     vite:
       specifier: ^7.2.4
       version: 7.2.4
   vue:
+    '@vue/reactivity':
+      specifier: ^3.5.25
+      version: 3.5.25
+    '@vue/runtime-core':
+      specifier: ^3.5.25
+      version: 3.5.25
     '@vue/shared':
       specifier: ^3.5.22
       version: 3.5.25
@@ -93,7 +112,7 @@ importers:
         specifier: catalog:tsdown
         version: 0.16.6(synckit@0.11.11)(typescript@5.9.3)
       tsx:
-        specifier: ^4.20.6
+        specifier: catalog:utils
         version: 4.20.6
       typescript:
         specifier: ^5.9.3
@@ -165,10 +184,10 @@ importers:
         specifier: ^7.0.6
         version: 7.0.6
       '@types/babel__template':
-        specifier: ^7.4.4
+        specifier: catalog:babel
         version: 7.4.4
       '@types/babel__traverse':
-        specifier: ^7.28.0
+        specifier: catalog:babel
         version: 7.28.0
       '@vue/test-utils':
         specifier: ^2.4.6
@@ -257,6 +276,40 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
 
+  packages/generate-vue-runtime-core-types:
+    dependencies:
+      '@babel/core':
+        specifier: catalog:babel
+        version: 7.28.5
+      '@babel/plugin-syntax-typescript':
+        specifier: catalog:babel
+        version: 7.27.1(@babel/core@7.28.5)
+      '@babel/template':
+        specifier: catalog:babel
+        version: 7.27.2
+      '@babel/traverse':
+        specifier: catalog:babel
+        version: 7.28.5
+      tsx:
+        specifier: catalog:utils
+        version: 4.20.6
+    devDependencies:
+      '@types/babel__template':
+        specifier: catalog:babel
+        version: 7.4.4
+      '@types/babel__traverse':
+        specifier: catalog:babel
+        version: 7.28.0
+      '@vue/reactivity':
+        specifier: catalog:vue
+        version: 3.5.25
+      '@vue/runtime-core':
+        specifier: catalog:vue
+        version: 3.5.25
+      '@vue/shared':
+        specifier: catalog:vue
+        version: 3.5.25
+
   packages/playground:
     dependencies:
       element-plus:
@@ -288,7 +341,7 @@ importers:
         specifier: catalog:babel
         version: 7.28.5
       '@babel/plugin-syntax-typescript':
-        specifier: ^7.27.1
+        specifier: catalog:babel
         version: 7.27.1(@babel/core@7.28.5)
       '@babel/plugin-transform-typescript':
         specifier: ^7.28.5

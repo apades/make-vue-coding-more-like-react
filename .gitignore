@@ -15,3 +15,5 @@ auto-imports.d.ts
 node-compile-cache/
 
 output
+
+packages/generate-vue-runtime-core-types/runtime-core.d.ts

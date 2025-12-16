@@ -1,0 +1,34 @@
+{
+  "name": "@mvcmlr/generate-vue-runtime-core-types",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch ./prettier.ts",
+    "build": "tsx ./index.ts",
+    "prettier": "prettier --write ./runtime-core.d.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.11.0",
+  "peerDependencies": {
+    "@vue/runtime-core": "^3.0.0",
+    "@vue/reactivity": "^3.0.0",
+    "@vue/shared": "^3.0.0"
+  },
+  "dependencies": {
+    "@babel/core": "catalog:babel",
+    "@babel/traverse": "catalog:babel",
+    "@babel/template": "catalog:babel",
+    "tsx": "catalog:utils",
+    "@babel/plugin-syntax-typescript": "catalog:babel"
+  },
+  "devDependencies": {
+    "@vue/runtime-core": "catalog:vue",
+    "@vue/reactivity": "catalog:vue",
+    "@vue/shared": "catalog:vue",
+    "@types/babel__template": "catalog:babel",
+    "@types/babel__traverse": "catalog:babel"
+  }
+}

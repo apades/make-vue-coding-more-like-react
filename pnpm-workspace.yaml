@@ -12,10 +12,17 @@ catalogs:
     '@babel/traverse': '^7.28.4'
     '@babel/core': '^7.28.4'
     '@babel/preset-env': '^7.28.3'
+    '@babel/plugin-syntax-typescript': '^7.27.1'
+    '@types/babel__template': '^7.4.4'
+    '@types/babel__traverse': '^7.28.0'
   vue:
     vue: '^3.5.25'
     '@vue/shared': '^3.5.22'
+    '@vue/reactivity': '^3.5.25'
+    '@vue/runtime-core': '^3.5.25'
   tsdown:
     tsdown: '^0.16.6'
   vite:
     vite: '^7.2.4'
+  utils:
+    tsx: '^4.20.6'

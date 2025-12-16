@@ -1,16 +1,9 @@
+import { ElMention, ElTransfer, ElUpload } from 'element-plus'
+import 'element-plus/dist/index.css'
+import { NAutoComplete, NDatePicker } from 'naive-ui'
 import { effect, ref } from 'vue'
-import {
-  ElButton,
-  ElMention,
-  ElRadio,
-  ElTransfer,
-  TransferInstance,
-  ElUpload,
-} from 'element-plus'
 import CompB, { CanRefComp, type Handler } from './CompB'
 import type { PropsB } from './type'
-import 'element-plus/dist/index.css'
-import { NAutoComplete } from 'naive-ui'
 
 type ComProps = {
   foo: string
@@ -24,7 +17,9 @@ const ChildComp = (
   // ref: any,
 ) => {
   let com = unuProps.a + unuProps.foo
-  const val = ref(0)
+  const dVal = ref(0)
+  const sVal = ref('')
+  const bVal = ref(false)
   const mention = ref('')
   const options = ref([
     {
@@ -44,7 +39,10 @@ const ChildComp = (
       value: 'btea',
     },
   ])
-  const nVal = ref('')
+
+  effect(() => {
+    console.log('sVal change', sVal.value)
+  })
 
   if (unuProps.a) {
     return null
@@ -57,30 +55,34 @@ const ChildComp = (
       <p>bar:{unuProps.bar}</p>
 
       <NAutoComplete
-        v-model={nVal.value}
+        // v-model:value={sVal.value}
+        v-model:value={'asd'}
         options={options.value}
+        v-slots={{}}
       ></NAutoComplete>
 
+      <NDatePicker v-model:show={bVal.value}></NDatePicker>
+
       <ElMention
-        v-model={mention.value}
-        v-slots={
-          {
-            header: () => <div>header</div>,
-          } as any
-        }
+        v-model={sVal.value}
+        v-slots={{
+          header: () => <div>header</div>,
+        }}
         options={options.value}
         onSearch={(v) => {
-          // console.log('onSearch s', v)
+          console.log('onSearch s', v)
         }}
       ></ElMention>
-      {/* <ElTransfer renderContent={} v-slots={{}}></ElTransfer> */}
-      {/* <ElUpload withCredentials accept="asd"></ElUpload> */}
+      <ElTransfer v-slots={{ h: () => <div>asd</div> }}></ElTransfer>
+      <ElUpload withCredentials accept="asd" v-slots={{}}>
+        <div>upload</div>
+      </ElUpload>
       <p
         onClick={() => {
-          val.value++
+          dVal.value++
         }}
       >
-        val: {val.value}
+        val: {dVal.value}
       </p>
     </div>
   )

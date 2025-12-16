@@ -9,7 +9,12 @@ export default tsEslint.config(
   tsEslint.configs.recommended,
   importPlugin.flatConfigs.recommended,
   {
-    ignores: ['**/dist/*', '**/lib/*', '**/build/*'],
+    ignores: [
+      '**/dist/*',
+      '**/lib/*',
+      '**/build/*',
+      'packages/generate-vue-runtime-core-types/runtime-core.d.ts',
+    ],
   },
   {
     languageOptions: {
